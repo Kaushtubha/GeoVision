@@ -31,6 +31,10 @@ env/
 # Data & Models (Keep repositories light; raw data and weights gitignored)
 data/raw/
 data/processed/
+*.pt
+*.pth
+*.bin
+*.onnx
 weights/*.pt
 weights/*.pth
 weights/*.bin
@@ -40,7 +44,7 @@ weights/*.onnx
 # MLflow and Experiments
 mlruns/
 .mlflow/
-experiments/runs/
+experiments/
 wandb/
 runs/
 

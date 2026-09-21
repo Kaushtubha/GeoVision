@@ -1,12 +1,16 @@
 """MLflow experiment tracking integration for GeoVision."""
 
 import json
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
 from geovision.constants import MLRUNS_DIR
 from geovision.logger import get_logger
+
+# Opt into local filesystem tracking in MLflow 3.x
+os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
 
 logger = get_logger("geovision.tracking")
 
@@ -90,7 +94,14 @@ class ExperimentTracker:
 
     def log_metrics(self, metrics: dict[str, float], step: int | None = None) -> None:
         """Log numeric evaluation or training metrics."""
-        clean_metrics = {k: float(v) for k, v in metrics.items() if isinstance(v, (int, float))}
+        import re
+        clean_metrics = {}
+        for k, v in metrics.items():
+            if isinstance(v, (int, float)):
+                # MLflow metrics only permit alphanumerics, underscores (_), dashes (-), periods (.), spaces ( ) and slashes (/)
+                sanitized_key = re.sub(r"[^a-zA-Z0-9_\-./ ]", "_", str(k))
+                clean_metrics[sanitized_key] = float(v)
+
         if self.enabled:
             try:
                 mlflow.log_metrics(clean_metrics, step=step)
