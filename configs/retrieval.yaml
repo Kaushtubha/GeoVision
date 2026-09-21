@@ -1,0 +1,22 @@
+task: "retrieval"
+model_name: "ViT-B-32"
+pretrained: "openai"
+dataset_name: "eurosat"
+num_classes: 10
+embedding_dim: 512
+collection_name: "geovision_scenes"
+top_k: 5
+batch_size: 16
+qdrant_path: "data/qdrant_db"
+device: "cpu"
+classes:
+  - AnnualCrop
+  - Forest
+  - HerbaceousVegetation
+  - Highway
+  - Industrial
+  - Pasture
+  - PermanentCrop
+  - Residential
+  - River
+  - SeaLake

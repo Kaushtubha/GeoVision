@@ -1,0 +1,8 @@
+enabled: true
+experiment_name: "GeoVision"
+tracking_uri: "mlruns"
+log_models: true
+tags:
+  project: "GeoVision"
+  platform: "Earth Observation"
+  mode: "local_reproducible"

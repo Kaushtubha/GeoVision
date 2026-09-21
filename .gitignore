@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Data & Models (Keep repositories light; raw data and weights gitignored)
+data/raw/
+data/processed/
+weights/*.pt
+weights/*.pth
+weights/*.bin
+weights/*.onnx
+!weights/.gitkeep
+
+# MLflow and Experiments
+mlruns/
+.mlflow/
+experiments/runs/
+wandb/
+runs/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/

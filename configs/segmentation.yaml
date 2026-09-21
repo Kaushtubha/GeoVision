@@ -1,0 +1,20 @@
+task: "segmentation"
+architecture: "Unet"
+encoder_name: "mobilenet_v3_small"
+encoder_weights: "imagenet"
+dataset_name: "landcover_ai"
+num_classes: 5
+image_size: 512
+epochs: 30
+smoke_epochs: 1
+batch_size: 4
+learning_rate: 0.0003
+loss: "dice_ce"
+device: "cpu"
+save_dir: "weights/segmentation"
+classes:
+  0: "Background"
+  1: "Building"
+  2: "Woodland"
+  3: "Water"
+  4: "Road"

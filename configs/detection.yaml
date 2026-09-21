@@ -1,0 +1,24 @@
+task: "detection"
+model_name: "yolov8n.pt"
+dataset_name: "nwpu_vhr10"
+num_classes: 10
+image_size: 512
+epochs: 50
+smoke_epochs: 1
+batch_size: 8
+learning_rate: 0.001
+confidence_threshold: 0.25
+iou_threshold: 0.5
+device: "cpu"
+save_dir: "weights/detection"
+classes:
+  - airplane
+  - ship
+  - storage_tank
+  - baseball_diamond
+  - tennis_court
+  - basketball_court
+  - ground_track_field
+  - harbor
+  - bridge
+  - vehicle

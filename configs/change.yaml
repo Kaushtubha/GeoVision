@@ -1,0 +1,16 @@
+task: "change_detection"
+architecture: "SiameseUnet"
+encoder_name: "resnet18"
+encoder_weights: "imagenet"
+dataset_name: "levir_cd"
+num_classes: 2
+image_size: 256
+epochs: 25
+smoke_epochs: 1
+batch_size: 4
+learning_rate: 0.0003
+device: "cpu"
+save_dir: "weights/change"
+classes:
+  0: "No Change"
+  1: "Change"
