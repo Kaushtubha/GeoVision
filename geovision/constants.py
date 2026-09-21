@@ -31,6 +31,14 @@ LANDCOVER_AI_CLASSES = {
     4: "Road",
 }
 
+LANDCOVER_AI_COLORS = {
+    0: (0, 0, 0),        # Black / Background
+    1: (220, 20, 60),    # Crimson Red / Building
+    2: (34, 139, 34),    # Forest Green / Woodland
+    3: (30, 144, 255),   # Dodger Blue / Water
+    4: (255, 215, 0),    # Gold / Road
+}
+
 # NWPU VHR-10 10 detection classes
 NWPU_VHR10_CLASSES = [
     "airplane",

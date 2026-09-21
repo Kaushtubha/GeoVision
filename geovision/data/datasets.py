@@ -168,24 +168,40 @@ class LandCoverAIDataset(Dataset):
     ):
         self.root_dir = Path(root_dir)
         self.transform = transform
-        self.images_dir = self.root_dir / "images"
-        self.masks_dir = self.root_dir / "masks"
+        
+        # Check direct or nested directory
+        if (self.root_dir / "LandCoverAI" / "images").exists():
+            self.images_dir = self.root_dir / "LandCoverAI" / "images"
+            self.masks_dir = self.root_dir / "LandCoverAI" / "masks"
+        elif (self.root_dir / "landcover_ai" / "images").exists():
+            self.images_dir = self.root_dir / "landcover_ai" / "images"
+            self.masks_dir = self.root_dir / "landcover_ai" / "masks"
+        else:
+            self.images_dir = self.root_dir / "images"
+            self.masks_dir = self.root_dir / "masks"
 
-        self.image_files = sorted(
-            list(self.images_dir.glob("*.png")) + list(self.images_dir.glob("*.jpg"))
-        ) if self.images_dir.exists() else []
+        self.image_files = []
+        if self.images_dir.exists():
+            for ext in ("*.png", "*.jpg", "*.jpeg", "*.tif", "*.tiff"):
+                self.image_files.extend(list(self.images_dir.glob(ext)))
+            self.image_files = sorted(list(set(self.image_files)))
 
     def __len__(self) -> int:
         return len(self.image_files)
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         img_path = self.image_files[idx]
-        mask_path = self.masks_dir / f"{img_path.stem}.png"
+        mask_path = None
+        for ext in (".png", ".tif", ".tiff", ".jpg"):
+            candidate = self.masks_dir / f"{img_path.stem}{ext}"
+            if candidate.exists():
+                mask_path = candidate
+                break
 
         with Image.open(img_path) as im:
             img_arr = np.array(im.convert("RGB"))
 
-        if mask_path.exists():
+        if mask_path is not None and mask_path.exists():
             with Image.open(mask_path) as m:
                 mask_arr = np.array(m, dtype=np.uint8)
         else:

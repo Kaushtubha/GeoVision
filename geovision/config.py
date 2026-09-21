@@ -61,8 +61,8 @@ class DetectionConfig(BaseModel):
 
 class SegmentationConfig(BaseModel):
     """Land-cover semantic segmentation settings."""
-    architecture: str = "Unet"  # SegFormer or Unet
-    encoder_name: str = "mobilenet_v3_small"  # mit_b0 or mobilenet_v3_small
+    architecture: str = "Unet"  # SegFormer, Unet, FPN, DeepLabV3Plus
+    encoder_name: str = "resnet18"  # resnet18, mit_b0, mobilenet_v2
     encoder_weights: str = "imagenet"
     dataset_name: str = "landcover_ai"
     num_classes: int = 5  # Background + 4 classes
