@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from contextlib import asynccontextmanager
 
@@ -51,10 +52,18 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    cors_origins_env = os.getenv("CORS_ORIGINS", "*")
+    if cors_origins_env.strip() == "*":
+        origins = ["*"]
+        allow_creds = False
+    else:
+        origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+        allow_creds = True
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=origins,
+        allow_credentials=allow_creds,
         allow_methods=["*"],
         allow_headers=["*"],
     )

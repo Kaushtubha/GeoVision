@@ -1,4 +1,8 @@
-# Python
+# ==============================================================================
+# GeoVision: Git Ignore Configuration
+# ==============================================================================
+
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,13 +26,21 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual Environments
+# --- Virtual Environments ---
 .venv/
 venv/
 ENV/
 env/
+.env.local
+.venv*/
 
-# Data & Models (Keep repositories light; raw data and weights gitignored)
+# --- Environment & Secret Variables ---
+.env
+.env.*
+!.env.example
+
+# --- Machine Learning Data & Weights ---
+# Keep repository lightweight; datasets & heavy weights are downloaded/generated on demand
 data/raw/
 data/processed/
 data/qdrant_db/
@@ -37,30 +49,61 @@ data/qdrant_db/
 *.pth
 *.bin
 *.onnx
-weights/*.pt
-weights/*.pth
-weights/*.bin
-weights/*.onnx
+*.safetensors
+*.ckpt
+yolov8n.pt
+weights/*
 !weights/.gitkeep
 
-# MLflow and Experiments
+# --- MLflow, Experiment Tracking & Run Outputs ---
 mlruns/
 .mlflow/
-experiments/
+experiments/runs/
+experiments/visualizations/
 wandb/
 runs/
+outputs/
 
-# IDE & OS
+# --- Frontend (Node / React / Vite) ---
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Testing, Coverage & Linters ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# --- IDEs, Editors & Operating Systems ---
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Testing & Coverage
-.pytest_cache/
-.coverage
-htmlcov/
-.ruff_cache/
+# --- Temporary & Scratch Files ---
+*.tmp
+*.temp
+scratch/

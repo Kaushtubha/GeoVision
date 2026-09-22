@@ -1,0 +1,18 @@
+{
+  "source_raster": "experiments\\visualizations\\sample_geotiff_warsaw.tif",
+  "crs": "EPSG:2180",
+  "dimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "gsd_meters": [
+    0.5,
+    0.5
+  ],
+  "total_detections": 0,
+  "detections": [],
+  "geojson": {
+    "type": "FeatureCollection",
+    "features": []
+  }
+}
