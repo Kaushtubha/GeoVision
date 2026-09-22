@@ -31,6 +31,8 @@ env/
 # Data & Models (Keep repositories light; raw data and weights gitignored)
 data/raw/
 data/processed/
+data/qdrant_db/
+*.sqlite*
 *.pt
 *.pth
 *.bin

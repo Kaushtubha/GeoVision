@@ -118,6 +118,6 @@ ruff check .
 - [x] **Phase 3: Object Detection** — YOLO nano training, `--smoke` mode, mAP@50-95 evaluator, geo-referenced bounding box outputs.
 - [x] **Phase 4: Semantic Segmentation** — SegFormer / SMP UNet, mIoU / Dice metrics, class area % reporting.
 - [x] **Phase 5: Change Detection** — Siamese difference network, binary change masks & stats.
-- [ ] **Phase 6: Scene Retrieval** — Zero-shot vs Fine-tuned CLIP embeddings, embedded Qdrant index, Recall@K benchmark.
+- [x] **Phase 6: Scene Retrieval** — Zero-shot vs Fine-tuned CLIP embeddings, embedded Qdrant index, Recall@K benchmark.
 - [ ] **Phase 7: Grounded VLM Earth Assistant** — Evidence synthesizer, citation verification, satellite QA eval set.
 - [ ] **Phase 8: Serving & Research Benchmarks** — FastAPI REST API, Dockerfile, augmentation ablation study, model cards.

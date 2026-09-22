@@ -9,6 +9,10 @@ from geovision.metrics.detection import (
     compute_iou_matrix,
     evaluate_detection_metrics,
 )
+from geovision.metrics.retrieval import (
+    evaluate_retrieval_metrics,
+    evaluate_zeroshot_accuracy,
+)
 from geovision.metrics.segmentation import (
     SegmentationMetricsCalculator,
     compute_landcover_distribution,
@@ -22,4 +26,6 @@ __all__ = [
     "compute_landcover_distribution",
     "ChangeMetricsCalculator",
     "compute_change_statistics",
+    "evaluate_retrieval_metrics",
+    "evaluate_zeroshot_accuracy",
 ]

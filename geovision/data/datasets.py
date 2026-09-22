@@ -39,13 +39,22 @@ class EuroSATDataset(Dataset):
         self.samples: List[Tuple[Path, int]] = []
         self.class_to_idx = {cls_name: i for i, cls_name in enumerate(EUROSAT_CLASSES)}
 
+        base_dir = self.root_dir
+        if (self.root_dir / "2750").exists():
+            base_dir = self.root_dir / "2750"
+        elif (self.root_dir / "EuroSAT").exists():
+            base_dir = self.root_dir / "EuroSAT"
+        elif (self.root_dir / "eurosat").exists():
+            base_dir = self.root_dir / "eurosat"
+
         # Load samples per class
         all_samples = []
         for cls_name in EUROSAT_CLASSES:
-            cls_dir = self.root_dir / cls_name
+            cls_dir = base_dir / cls_name
             if cls_dir.exists():
-                for img_path in cls_dir.glob("*.jpg"):
-                    all_samples.append((img_path, self.class_to_idx[cls_name]))
+                for ext in ("*.jpg", "*.jpeg", "*.png", "*.tif"):
+                    for img_path in cls_dir.glob(ext):
+                        all_samples.append((img_path, self.class_to_idx[cls_name]))
 
         # Deterministic split
         if split != "all" and all_samples:
