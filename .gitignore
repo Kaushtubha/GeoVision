@@ -44,6 +44,7 @@ env/
 data/raw/
 data/processed/
 data/qdrant_db/
+data/samples/
 *.sqlite*
 *.pt
 *.pth
