@@ -23,7 +23,7 @@ detection:
 
 segmentation:
   architecture: "Unet"
-  encoder_name: "mobilenet_v3_small"
+  encoder_name: "resnet18"
   encoder_weights: "imagenet"
   dataset_name: "landcover_ai"
   num_classes: 5
