@@ -1,7 +1,6 @@
 """Grounded VLM Earth Assistant and deterministic reasoning engine."""
 
-from typing import Any, Dict, List, Optional, Tuple
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from geovision.logger import get_logger
 from geovision.vlm.evidence import EarthObservationEvidence
@@ -24,7 +23,7 @@ class Message(BaseModel):
     """Chat message schema."""
     role: str  # 'system', 'user', 'assistant'
     content: str
-    verification: Optional[VerificationReport] = None
+    verification: VerificationReport | None = None
 
 
 class DeterministicGroundedReasoner:
@@ -38,7 +37,6 @@ class DeterministicGroundedReasoner:
     ) -> str:
         """Formulate a grounded natural-language answer with citation tags from active evidence."""
         q_lower = query.lower()
-        tag_map = evidence.get_tag_map()
 
         if not evidence.evidence_items:
             return "No computer vision evidence has been extracted for this scene. Please run the detection, segmentation, or change detection modules first."
@@ -112,8 +110,8 @@ class GroundedEarthAssistant:
         strictness: str = "strict",
     ):
         self.strictness = strictness
-        self.history: List[Message] = []
-        self.active_evidence: Optional[EarthObservationEvidence] = None
+        self.history: list[Message] = []
+        self.active_evidence: EarthObservationEvidence | None = None
 
     def set_evidence(self, evidence: EarthObservationEvidence) -> None:
         """Set the active scene evidence for subsequent conversational turns."""
@@ -126,9 +124,9 @@ class GroundedEarthAssistant:
     def ask(
         self,
         query: str,
-        evidence: Optional[EarthObservationEvidence] = None,
+        evidence: EarthObservationEvidence | None = None,
         verify: bool = True,
-    ) -> Tuple[str, VerificationReport]:
+    ) -> tuple[str, VerificationReport]:
         """Ask a question about the active satellite scene and receive a verified, grounded answer.
 
         Args:

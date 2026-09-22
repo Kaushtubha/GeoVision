@@ -3,13 +3,10 @@
 import argparse
 import sys
 from pathlib import Path
-import numpy as np
-from PIL import Image
 
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from geovision.constants import RAW_DATA_DIR
 from geovision.logger import get_logger
 from geovision.vlm.assistant import GroundedEarthAssistant
 from geovision.vlm.evidence import EvidenceSynthesizer

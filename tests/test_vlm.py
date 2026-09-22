@@ -1,9 +1,7 @@
 """Comprehensive unit tests for Grounded VLM Earth Assistant and Citation Verifier."""
 
-import pytest
 
 from geovision.vlm.assistant import (
-    DeterministicGroundedReasoner,
     GroundedEarthAssistant,
 )
 from geovision.vlm.eval_qa import (
@@ -11,11 +9,9 @@ from geovision.vlm.eval_qa import (
     evaluate_grounded_assistant,
 )
 from geovision.vlm.evidence import (
-    EarthObservationEvidence,
     EvidenceSynthesizer,
-    EvidenceTagItem,
 )
-from geovision.vlm.verifier import CitationVerifier, VerificationReport
+from geovision.vlm.verifier import CitationVerifier
 
 
 def test_evidence_synthesizer_and_markdown():

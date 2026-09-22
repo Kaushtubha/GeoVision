@@ -1,8 +1,7 @@
 """Structured multimodal evidence synthesis for grounded Earth Observation reasoning."""
 
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-import numpy as np
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from geovision.logger import get_logger
@@ -15,16 +14,16 @@ class EvidenceTagItem(BaseModel):
     tag: str
     category: str
     summary: str
-    data: Dict[str, Any] = Field(default_factory=dict)
+    data: dict[str, Any] = Field(default_factory=dict)
 
 
 class EarthObservationEvidence(BaseModel):
     """Comprehensive container for structured evidence extracted across computer vision modules."""
-    evidence_items: List[EvidenceTagItem] = Field(default_factory=list)
-    image_paths: List[str] = Field(default_factory=list)
-    raw_payload: Dict[str, Any] = Field(default_factory=dict)
+    evidence_items: list[EvidenceTagItem] = Field(default_factory=list)
+    image_paths: list[str] = Field(default_factory=list)
+    raw_payload: dict[str, Any] = Field(default_factory=dict)
 
-    def get_tag_map(self) -> Dict[str, EvidenceTagItem]:
+    def get_tag_map(self) -> dict[str, EvidenceTagItem]:
         """Map tag identifier (e.g. 'DET-1', 'SEG-2') to its evidence object."""
         return {item.tag: item for item in self.evidence_items}
 
@@ -55,16 +54,16 @@ class EvidenceSynthesizer:
 
     @staticmethod
     def synthesize_from_results(
-        detection_result: Optional[Dict[str, Any]] = None,
-        segmentation_result: Optional[Dict[str, Any]] = None,
-        change_result: Optional[Dict[str, Any]] = None,
-        retrieval_result: Optional[List[Dict[str, Any]]] = None,
-        geo_metadata: Optional[Any] = None,
-        image_paths: Optional[List[str]] = None,
+        detection_result: dict[str, Any] | None = None,
+        segmentation_result: dict[str, Any] | None = None,
+        change_result: dict[str, Any] | None = None,
+        retrieval_result: list[dict[str, Any]] | None = None,
+        geo_metadata: Any | None = None,
+        image_paths: list[str] | None = None,
     ) -> EarthObservationEvidence:
         """Synthesize multimodal outputs into verified evidence schema with unique citation tags."""
-        items: List[EvidenceTagItem] = []
-        raw: Dict[str, Any] = {}
+        items: list[EvidenceTagItem] = []
+        raw: dict[str, Any] = {}
 
         # 1. Geospatial & CRS Metadata
         if geo_metadata is not None:

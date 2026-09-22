@@ -3,121 +3,245 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Tested with: pytest](https://img.shields.io/badge/tested%20with-pytest-0A9EDC.svg)](https://docs.pytest.org/en/stable/)
+[![Tests: 48 passed](https://img.shields.io/badge/tests-48%20passed-success.svg)](https://docs.pytest.org/en/stable/)
+[![FastAPI Serving](https://img.shields.io/badge/FastAPI-Production%20Ready-009688.svg)](https://fastapi.tiangolo.com/)
 
-**GeoVision** is a production-grade, modular, and interview-defensible Earth Observation (EO) and satellite AI intelligence platform.
-
----
-
-## 🛰️ Core Capabilities
-
-1. **Object Detection**: High-resolution aerial optical remote sensing detection (airplanes, ships, storage tanks, harbors, bridges, vehicles).
-2. **Semantic Land-Cover Segmentation**: Orthophoto multi-class land-cover segmentation with class area percentage reporting.
-3. **Bi-Temporal Change Detection**: Siamese difference network producing verified binary change masks and statistical shift metrics.
-4. **Metric Learning & Scene Retrieval**: Contrastive CLIP-based satellite embeddings indexed in embedded Qdrant vector database (evaluated with Recall@1/5/10).
-5. **Grounded VLM Earth Assistant**: Natural-language satellite QA assistant grounded strictly in CV module structured evidence JSON without hallucinated claims.
-6. **Geospatial & CRS Engine**: Full GeoTIFF raster parsing, CRS reprojection, affine transform handling, and pixel $\leftrightarrow$ Lat/Lon coordinate conversions.
-7. **Serving & Ops**: FastAPI REST endpoints, MLflow experiment tracking, configuration management, and reproducible `--smoke` modes.
+**GeoVision** is an end-to-end, production-grade, and interview-defensible Earth Observation (EO) and Multimodal Satellite Artificial Intelligence Platform.
 
 ---
 
-## 🏗️ Repository Architecture
+## 🛰️ Core Capabilities & Subsystems
+
+1. **Geospatial & CRS Engine**:
+   - Georeferenced raster I/O supporting GeoTIFF, standard RGB, and multispectral arrays.
+   - Dual-directional coordinate transformation between Pixel Coordinates $(x, y)$ and Geographic/Projected Coordinates (WGS84 EPSG:4326, UTM, EPSG:2180).
+   - Overlapping sliding-window tiler (`RasterTiler`) and seamless Hann-window blended patch reconstructor (`PatchReconstructor`).
+2. **Object Detection**:
+   - High-resolution optical remote sensing detection across 10 NWPU VHR-10 categories (*airplane, ship, storage tank, baseball diamond, tennis court, basketball court, ground track field, harbor, bridge, vehicle*).
+   - COCO-style multi-threshold mAP@50-95 metric calculation and GeoJSON bounding box export.
+3. **Semantic Land-Cover Segmentation**:
+   - Multi-class orthophoto land-cover segmentation (*Background, Building, Woodland, Water, Road*).
+   - Weighted Compound Loss (`DiceCELoss`, `FocalLoss`), confusion matrix metric calculation (mIoU, Dice, Overall Accuracy), and surface area calculation ($m^2$, hectares, $km^2$).
+4. **Bi-Temporal Change Detection**:
+   - Siamese UNet architecture (`SiameseUNet`, `SiameseChangeDetector`) taking pre-event ($T_1$) and post-event ($T_2$) satellite pairs.
+   - Combined BCE + Binary Dice loss (`ChangeLoss`), Change-IoU, F1 score, precision/recall, and tri-panel visual report generation ($T_1$, $T_2$, Change Overlay).
+5. **Metric Learning & Scene Vector Retrieval**:
+   - OpenCLIP ViT-B-32 / lightweight vision-text projection embedder mapping satellite scenes into 512-dim normalized metric space.
+   - Vector database indexing backed by embedded Qdrant / in-memory store with Recall@1/5/10, MRR, mAP, and zero-shot evaluation.
+6. **Grounded VLM Earth Assistant**:
+   - Factual natural-language satellite Q&A assistant with strict citation verification (`CitationVerifier`).
+   - Grounded directly in structured CV evidence (`[DET-x]`, `[SEG-x]`, `[CHG-x]`, `[GEO-x]`, `[RET-x]`) with zero hallucination.
+7. **FastAPI REST Serving & Benchmarking**:
+   - Production FastAPI microservice (`/health`, `/api/v1/detect`, `/api/v1/segment`, `/api/v1/change`, `/api/v1/search`, `/api/v1/chat`, `/api/v1/evidence`).
+   - Automated benchmark suite profiling end-to-end throughput and latency across all modules.
+
+---
+
+## 🏗️ Repository Structure
 
 ```
 GeoVision/
-├── configs/               # Hierarchical YAML configs for all modules & experiments
+├── configs/                     # Hierarchical YAML configs for all modules & experiments
 │   ├── default.yaml
 │   ├── detection.yaml
 │   ├── segmentation.yaml
 │   ├── change.yaml
 │   ├── retrieval.yaml
 │   └── tracking.yaml
-├── data/                  # Raw & processed data directory (gitignored)
+├── data/                        # Raw & processed data directory (gitignored)
 │   ├── raw/
 │   └── processed/
-├── geovision/             # Core Python package
+├── geovision/                   # Core Python package
 │   ├── __init__.py
-│   ├── config.py          # Type-safe Pydantic v2 configuration engine
-│   ├── constants.py       # Dataset class mappings and directory paths
-│   ├── logger.py          # Rich structured logging
-│   ├── data/              # Downloaders, dataset loaders, statistics
-│   ├── tracking/          # MLflow experiment tracking integration
-│   ├── geo/               # CRS, GeoTIFF, coordinate transformation
-│   ├── detection/         # Object detection pipeline
-│   ├── segmentation/      # Land-cover segmentation pipeline
-│   ├── change/            # Siamese change detection pipeline
-│   ├── retrieval/         # Vector search & metric learning
-│   ├── vlm/               # Grounded VLM assistant & evidence synthesis
-│   ├── metrics/           # Evaluation metrics (mAP, mIoU, Dice, Recall@K)
-│   └── api/               # FastAPI routers & schemas
-├── notebooks/             # Exploratory notebooks
-│   └── 01_data_exploration.ipynb
-├── scripts/               # CLI tools for download, exploration, training, eval
-│   ├── download_datasets.py
-│   └── explore_data.py
-├── tests/                 # Comprehensive unit test suite (pytest)
+│   ├── config.py                # Type-safe Pydantic v2 configuration engine
+│   ├── constants.py             # Dataset class mappings and directory paths
+│   ├── logger.py                # Rich structured logging
+│   ├── api/                     # FastAPI REST app, routers, schemas & services
+│   ├── change/                  # Siamese change detection pipeline
+│   ├── data/                    # Dataset loaders, smoke generators, statistics
+│   ├── detection/               # YOLO object detection pipeline
+│   ├── geo/                     # CRS transformations, GeoTIFF I/O, tiling engine
+│   ├── metrics/                 # Strict evaluation metrics (mAP, mIoU, Dice, Recall@K)
+│   ├── retrieval/               # OpenCLIP embedder & Qdrant vector retrieval
+│   ├── segmentation/            # Land-cover segmentation pipeline
+│   ├── tracking/                # MLflow experiment tracking integration
+│   └── vlm/                     # Grounded VLM assistant, synthesizer & verifier
+├── scripts/                     # Production CLI tools
+│   ├── benchmark_suite.py       # End-to-end latency & throughput benchmark suite
+│   ├── build_scene_index.py     # Qdrant scene vector index builder
+│   ├── chat_assistant.py        # Interactive Grounded Earth Assistant CLI
+│   ├── download_datasets.py     # Real dataset downloader & smoke data generator
+│   ├── eval_change.py           # Change detection benchmark evaluation CLI
+│   ├── eval_detection.py        # Object detection benchmark evaluation CLI
+│   ├── eval_retrieval.py        # Vector retrieval benchmark evaluation CLI
+│   ├── eval_segmentation.py     # Segmentation benchmark evaluation CLI
+│   ├── eval_vlm.py              # Satellite VQA benchmark evaluation CLI
+│   ├── explore_data.py          # Data exploration & distribution visualizer
+│   ├── infer_change.py          # Bi-temporal change detection inference CLI
+│   ├── infer_detection.py       # Object detection inference CLI
+│   ├── infer_segmentation.py    # Segmentation inference CLI
+│   ├── query_scene.py           # Natural language satellite search CLI
+│   ├── serve.py                 # Uvicorn production server runner
+│   ├── train_change.py          # Change detection training CLI
+│   ├── train_detection.py       # Object detection training CLI
+│   ├── train_retrieval.py       # Metric learning training CLI
+│   └── train_segmentation.py    # Segmentation training CLI
+├── tests/                       # Comprehensive pytest suite (48 tests)
+│   ├── test_api.py
+│   ├── test_change.py
 │   ├── test_config.py
+│   ├── test_data_download.py
+│   ├── test_detection.py
+│   ├── test_geo.py
+│   ├── test_retrieval.py
+│   ├── test_segmentation.py
 │   ├── test_tracking.py
-│   └── test_data_download.py
-├── pyproject.toml         # Package metadata and tool configurations
-└── requirements.txt       # Pinned requirements
+│   └── test_vlm.py
+├── Dockerfile                   # Multi-stage production container definition
+├── pyproject.toml               # Package metadata and tool configurations
+└── requirements.txt             # Pinned requirements
 ```
 
 ---
 
-## 🚀 Quickstart & Verification
+## 🚀 Quickstart Guide
 
 ### 1. Environment Setup
 ```bash
+# Clone the repository
+git clone https://github.com/Kaushtubha/GeoVision.git
+cd GeoVision
+
 # Create and activate virtual environment
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1   # Windows PowerShell
+.\.venv\Scripts\Activate.ps1   # Windows PowerShell (or source .venv/bin/activate on Linux/macOS)
 
-# Install dependencies
-pip install -r requirements.txt
-pip install -e .
+# Install package in editable mode
+pip install -e ".[all]"
 ```
 
-### 2. Download or Generate Smoke Datasets (< 5 Seconds)
+### 2. Generate Smoke Datasets (< 5 Seconds)
 ```bash
-# Generate lightweight smoke-test subsets for fast CPU pipeline verification
+# Generate lightweight smoke subsets for instant CPU validation across all 4 datasets
 python scripts/download_datasets.py --smoke
 ```
 
-### 3. Explore Dataset Distributions
+### 3. Run Pytest Suite & Linting
 ```bash
-python scripts/explore_data.py
-```
-
-### 4. Run Pytest Suite & Linting
-```bash
-# Run unit tests
+# Run all 48 unit and integration tests
 pytest
 
-# Run linter
+# Run code style & lint checks
 ruff check .
 ```
 
 ---
 
-## 📊 Dataset Specifications
+## 💻 CLI Commands & Workflows
 
-| Module | Dataset | Resolution / GSD | Classes | License |
-| :--- | :--- | :--- | :--- | :--- |
-| **Detection** | **NWPU VHR-10** | 0.08–2.0m | 10 classes (airplane, ship, harbor, bridge, etc.) | Academic / Research |
-| **Segmentation** | **LandCover.ai** | 0.25–0.5m | 4 classes + background (Building, Woodland, Water, Road) | CC BY-NC-SA 4.0 |
-| **Change Detection** | **LEVIR-CD** | 0.5m | Binary building change mask | CC0 / Academic |
-| **Retrieval** | **EuroSAT** | 10m (Sentinel-2) | 10 Land Use / Land Cover classes | MIT License |
+### 🛰️ Object Detection (NWPU VHR-10)
+```bash
+# Smoke training on CPU
+python scripts/train_detection.py --smoke --epochs 1
+
+# Evaluation on test set
+python scripts/eval_detection.py --smoke
+
+# Run inference
+python scripts/infer_detection.py --input data/raw/nwpu_vhr10/images/smoke_000.jpg --output outputs/detection/
+```
+
+### 🗺️ Land-Cover Semantic Segmentation (LandCover.ai)
+```bash
+# Smoke training
+python scripts/train_segmentation.py --smoke --epochs 1
+
+# Evaluation
+python scripts/eval_segmentation.py --smoke
+
+# Inference with area statistics
+python scripts/infer_segmentation.py --input data/raw/landcover_ai/images/smoke_000.jpg --output outputs/segmentation/
+```
+
+### 🔄 Bi-Temporal Change Detection (LEVIR-CD)
+```bash
+# Smoke training
+python scripts/train_change.py --smoke --epochs 1
+
+# Evaluation
+python scripts/eval_change.py --smoke
+
+# Inference generating tri-panel report
+python scripts/infer_change.py --image-a data/raw/levir_cd/images_t1/smoke_000.jpg --image-b data/raw/levir_cd/images_t2/smoke_000.jpg --output outputs/change/
+```
+
+### 🔍 Scene Vector Retrieval (EuroSAT / Qdrant)
+```bash
+# Build vector index
+python scripts/build_scene_index.py --smoke
+
+# Query index using natural language text
+python scripts/query_scene.py --text "Dense residential buildings near highway" --top-k 5
+```
+
+### 🤖 Grounded VLM Earth Assistant
+```bash
+# Interactive single-turn query
+python scripts/chat_assistant.py --query "How many airplanes and storage tanks were detected?"
+
+# Run Satellite VQA Benchmark
+python scripts/eval_vlm.py
+```
+
+### 🌐 FastAPI Production Serving
+```bash
+# Start API server on localhost:8000
+python scripts/serve.py --host 0.0.0.0 --port 8000
+
+# Access Interactive Swagger Docs:
+# http://127.0.0.1:8000/docs
+# Access ReDoc:
+# http://127.0.0.1:8000/redoc
+```
+
+### 📊 End-to-End Latency Benchmark Suite
+```bash
+# Profile latency and throughput across all subsystems
+python scripts/benchmark_suite.py --iterations 5 --output benchmark_report.json
+```
 
 ---
 
-## 📈 Phase Roadmap
-- [x] **Phase 0: Plan** — System hardware audit, dataset verification, technical blueprint.
-- [x] **Phase 1: Foundation** — Architecture skeleton, Pydantic configs, MLflow tracking, verified downloaders, smoke test pipeline, pytest & ruff CI.
-- [x] **Phase 2: Geospatial & Data Pipeline** — GeoTIFF reader, CRS reprojection, affine transforms, windowed raster tiling.
-- [x] **Phase 3: Object Detection** — YOLO nano training, `--smoke` mode, mAP@50-95 evaluator, geo-referenced bounding box outputs.
-- [x] **Phase 4: Semantic Segmentation** — SegFormer / SMP UNet, mIoU / Dice metrics, class area % reporting.
-- [x] **Phase 5: Change Detection** — Siamese difference network, binary change masks & stats.
-- [x] **Phase 6: Scene Retrieval** — Zero-shot vs Fine-tuned CLIP embeddings, embedded Qdrant index, Recall@K benchmark.
-- [ ] **Phase 7: Grounded VLM Earth Assistant** — Evidence synthesizer, citation verification, satellite QA eval set.
-- [ ] **Phase 8: Serving & Research Benchmarks** — FastAPI REST API, Dockerfile, augmentation ablation study, model cards.
+## 🐳 Docker Deployment
+
+```bash
+# Build container image
+docker build -t geovision:latest .
+
+# Run container with FastAPI exposed on port 8000
+docker run -p 8000:8000 --name geovision-service geovision:latest
+```
+
+---
+
+## 🧪 Verification Matrix
+
+| Subsystem | Module Path | Test File | Test Status |
+| :--- | :--- | :--- | :--- |
+| **Config & Constants** | `geovision/config.py`, `constants.py` | `tests/test_config.py` | [PASSED] (4/4) |
+| **Data & Smoke** | `geovision/data/` | `tests/test_data_download.py` | [PASSED] (4/4) |
+| **Geospatial Engine** | `geovision/geo/` | `tests/test_geo.py` | [PASSED] (6/6) |
+| **Object Detection** | `geovision/detection/` | `tests/test_detection.py` | [PASSED] (5/5) |
+| **Segmentation** | `geovision/segmentation/` | `tests/test_segmentation.py` | [PASSED] (6/6) |
+| **Change Detection** | `geovision/change/` | `tests/test_change.py` | [PASSED] (6/6) |
+| **Vector Retrieval** | `geovision/retrieval/` | `tests/test_retrieval.py` | [PASSED] (4/4) |
+| **Grounded VLM** | `geovision/vlm/` | `tests/test_vlm.py` | [PASSED] (4/4) |
+| **FastAPI REST API** | `geovision/api/` | `tests/test_api.py` | [PASSED] (7/7) |
+| **MLflow Tracking** | `geovision/tracking/` | `tests/test_tracking.py` | [PASSED] (2/2) |
+| **Total** | **All 8 Phases** | **Full Suite** | **48 / 48 (100% Passed)** |
+
+---
+
+## 📄 License
+
+MIT License. Designed and developed for state-of-the-art satellite intelligence and Earth observation applications.

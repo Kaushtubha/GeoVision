@@ -1,7 +1,7 @@
 """Citation and hallucination verification engine for Grounded VLM Earth Assistant."""
 
 import re
-from typing import Any, Dict, List, Optional, Set
+
 from pydantic import BaseModel, Field
 
 from geovision.logger import get_logger
@@ -16,10 +16,10 @@ class VerificationReport(BaseModel):
     """Structured report assessing citation validity, hallucination rate, and factual grounding."""
     is_grounded: bool
     grounding_score: float  # 0.0 to 1.0
-    valid_citations: List[str] = Field(default_factory=list)
-    invalid_citations: List[str] = Field(default_factory=list)
-    missing_citations: List[str] = Field(default_factory=list)
-    ungrounded_claims: List[str] = Field(default_factory=list)
+    valid_citations: list[str] = Field(default_factory=list)
+    invalid_citations: list[str] = Field(default_factory=list)
+    missing_citations: list[str] = Field(default_factory=list)
+    ungrounded_claims: list[str] = Field(default_factory=list)
     summary: str
 
 
@@ -27,7 +27,7 @@ class CitationVerifier:
     """Verifies that all assertions, numeric figures, and citations strictly match evidence schema."""
 
     @staticmethod
-    def extract_citations(text: str) -> List[str]:
+    def extract_citations(text: str) -> list[str]:
         """Extract all bracketed evidence tags (e.g. ['DET-1', 'SEG-2']) from text."""
         matches = CITATION_REGEX.findall(text)
         return [m.upper() for m in matches]
@@ -62,12 +62,7 @@ class CitationVerifier:
         for inv in invalid_citations:
             ungrounded_claims.append(f"Cited non-existent evidence tag: [{inv}]")
 
-        # 2. Check for ungrounded numbers or fabricated object counts
-        # Find numeric quantities mentioned in text
-        number_tokens = re.findall(r"\b\d+(?:\.\d+)?%?", response_text)
-        evidence_str = " ".join([item.summary for item in evidence.evidence_items])
-
-        # 3. Compute Grounding Score
+        # 2. Compute Grounding Score
         if not evidence.evidence_items:
             # No evidence existed: response grounded if it acknowledges absence of evidence
             is_grounded = True

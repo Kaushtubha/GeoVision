@@ -1,14 +1,15 @@
 """Satellite Visual Question Answering (VQA) benchmark evaluation dataset and grounded reasoning evaluator."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from geovision.logger import get_logger
 from geovision.vlm.assistant import GroundedEarthAssistant
-from geovision.vlm.evidence import EarthObservationEvidence, EvidenceSynthesizer
+from geovision.vlm.evidence import EvidenceSynthesizer
 
 logger = get_logger("geovision.vlm.eval_qa")
 
 # Curated benchmark QA evaluation set covering all satellite analytics modalities
-DEFAULT_SATELLITE_QA_DATASET: List[Dict[str, Any]] = [
+DEFAULT_SATELLITE_QA_DATASET: list[dict[str, Any]] = [
     {
         "id": "QA-01",
         "category": "Object Detection",
@@ -94,9 +95,9 @@ DEFAULT_SATELLITE_QA_DATASET: List[Dict[str, Any]] = [
 
 
 def evaluate_grounded_assistant(
-    assistant: Optional[GroundedEarthAssistant] = None,
-    eval_dataset: Optional[List[Dict[str, Any]]] = None,
-) -> Dict[str, Any]:
+    assistant: GroundedEarthAssistant | None = None,
+    eval_dataset: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Run benchmark evaluation measuring grounding accuracy and citation adherence across satellite QA dataset.
 
     Args:
@@ -112,7 +113,7 @@ def evaluate_grounded_assistant(
     total_questions = len(qa_set)
     grounded_count = 0
     scores = []
-    category_scores: Dict[str, List[float]] = {}
+    category_scores: dict[str, list[float]] = {}
 
     for item in qa_set:
         cat = item["category"]
@@ -142,7 +143,7 @@ def evaluate_grounded_assistant(
     mean_score = sum(scores) / len(scores) if scores else 0.0
     hallucination_rate = 1.0 - grounding_acc
 
-    results: Dict[str, Any] = {
+    results: dict[str, Any] = {
         "total_questions": total_questions,
         "grounding_accuracy": round(grounding_acc, 4),
         "mean_grounding_score": round(mean_score, 4),

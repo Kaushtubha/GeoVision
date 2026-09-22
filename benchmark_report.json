@@ -1,0 +1,38 @@
+{
+  "geospatial_tiling": {
+    "avg_latency_ms": 58.55,
+    "min_latency_ms": 56.41,
+    "max_latency_ms": 60.69,
+    "throughput_megapixels_per_sec": 71.64
+  },
+  "object_detection": {
+    "avg_latency_ms": 197.18,
+    "min_latency_ms": 92.85,
+    "max_latency_ms": 301.52,
+    "fps": 5.07
+  },
+  "landcover_segmentation": {
+    "avg_latency_ms": 351.81,
+    "min_latency_ms": 338.8,
+    "max_latency_ms": 364.83,
+    "fps": 2.84
+  },
+  "change_detection": {
+    "avg_latency_ms": 194.56,
+    "min_latency_ms": 151.05,
+    "max_latency_ms": 238.06,
+    "fps": 5.14
+  },
+  "vector_retrieval": {
+    "avg_latency_ms": 4.14,
+    "min_latency_ms": 1.46,
+    "max_latency_ms": 6.81,
+    "qps": 241.83
+  },
+  "grounded_vlm": {
+    "avg_latency_ms": 0.07,
+    "min_latency_ms": 0.05,
+    "max_latency_ms": 0.1,
+    "requests_per_sec": 13633.26
+  }
+}
