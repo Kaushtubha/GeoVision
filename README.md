@@ -117,7 +117,7 @@ ruff check .
 - [x] **Phase 2: Geospatial & Data Pipeline** — GeoTIFF reader, CRS reprojection, affine transforms, windowed raster tiling.
 - [x] **Phase 3: Object Detection** — YOLO nano training, `--smoke` mode, mAP@50-95 evaluator, geo-referenced bounding box outputs.
 - [x] **Phase 4: Semantic Segmentation** — SegFormer / SMP UNet, mIoU / Dice metrics, class area % reporting.
-- [ ] **Phase 5: Change Detection** — Siamese difference network, binary change masks & stats.
+- [x] **Phase 5: Change Detection** — Siamese difference network, binary change masks & stats.
 - [ ] **Phase 6: Scene Retrieval** — Zero-shot vs Fine-tuned CLIP embeddings, embedded Qdrant index, Recall@K benchmark.
 - [ ] **Phase 7: Grounded VLM Earth Assistant** — Evidence synthesizer, citation verification, satellite QA eval set.
 - [ ] **Phase 8: Serving & Research Benchmarks** — FastAPI REST API, Dockerfile, augmentation ablation study, model cards.

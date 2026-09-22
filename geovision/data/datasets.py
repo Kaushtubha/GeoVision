@@ -239,13 +239,25 @@ class LEVIRCDDataset(Dataset):
     ):
         self.root_dir = Path(root_dir)
         self.transform = transform
-        self.a_dir = self.root_dir / "A"
-        self.b_dir = self.root_dir / "B"
-        self.label_dir = self.root_dir / "label"
+        
+        if (self.root_dir / "LEVIR-CD" / "A").exists():
+            self.a_dir = self.root_dir / "LEVIR-CD" / "A"
+            self.b_dir = self.root_dir / "LEVIR-CD" / "B"
+            self.label_dir = self.root_dir / "LEVIR-CD" / "label"
+        elif (self.root_dir / "levir_cd" / "A").exists():
+            self.a_dir = self.root_dir / "levir_cd" / "A"
+            self.b_dir = self.root_dir / "levir_cd" / "B"
+            self.label_dir = self.root_dir / "levir_cd" / "label"
+        else:
+            self.a_dir = self.root_dir / "A"
+            self.b_dir = self.root_dir / "B"
+            self.label_dir = self.root_dir / "label"
 
-        self.pair_files = sorted(
-            list(self.a_dir.glob("*.png")) + list(self.a_dir.glob("*.jpg"))
-        ) if self.a_dir.exists() else []
+        self.pair_files = []
+        if self.a_dir.exists():
+            for ext in ("*.png", "*.jpg", "*.jpeg", "*.tif", "*.tiff"):
+                self.pair_files.extend(list(self.a_dir.glob(ext)))
+            self.pair_files = sorted(list(set(self.pair_files)))
 
     def __len__(self) -> int:
         return len(self.pair_files)

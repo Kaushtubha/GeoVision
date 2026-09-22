@@ -1,5 +1,9 @@
 """Evaluation metrics for all GeoVision tasks."""
 
+from geovision.metrics.change import (
+    ChangeMetricsCalculator,
+    compute_change_statistics,
+)
 from geovision.metrics.detection import (
     compute_ap_from_pr,
     compute_iou_matrix,
@@ -16,4 +20,6 @@ __all__ = [
     "evaluate_detection_metrics",
     "SegmentationMetricsCalculator",
     "compute_landcover_distribution",
+    "ChangeMetricsCalculator",
+    "compute_change_statistics",
 ]
