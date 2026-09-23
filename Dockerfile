@@ -6,7 +6,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
-    PORT=10000
+    PORT=10000 \
+    YOLO_VERBOSE=False \
+    ULTRALYTICS_AUTOINSTALL=0 \
+    YOLO_OFFLINE=True
 
 # System dependencies for GDAL/PROJ and OpenCV image processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -34,5 +37,6 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Expose Render standard container port
 EXPOSE 10000
 
-# Launch production server with dynamic port support
-CMD ["python", "scripts/serve.py"]
+# Launch production server with direct uvicorn process
+CMD ["sh", "-c", "uvicorn geovision.api.app:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1 --log-level info"]
+
