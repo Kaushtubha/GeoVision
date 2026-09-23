@@ -3,8 +3,8 @@
 ### Multimodal Satellite Intelligence & Earth Observation Platform
 
 [![Live App](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://geo-vision-delta.vercel.app)
-[![API Status](https://img.shields.io/badge/API%20Live-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://geovision-api-8gci.onrender.com)
-[![Swagger Docs](https://img.shields.io/badge/Swagger-Interactive%20Docs-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://geovision-api-8gci.onrender.com/docs)
+[![API Status](https://img.shields.io/badge/API%20Live-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://geovision-api-9gci.onrender.com)
+[![Swagger Docs](https://img.shields.io/badge/Swagger-Interactive%20Docs-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://geovision-api-9gci.onrender.com/docs)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
@@ -27,10 +27,11 @@ The platform is deployed and publicly accessible on 100% free-tier infrastructur
 | Service | Host | Live URL | Description |
 | :--- | :--- | :--- | :--- |
 | **Mission Control Dashboard** | **Vercel** | [https://geo-vision-delta.vercel.app](https://geo-vision-delta.vercel.app) | React 18 + Vite + Tailwind CSS SPA |
-| **REST API Gateway** | **Render** | [`https://geovision-api-8gci.onrender.com`](https://geovision-api-8gci.onrender.com) | FastAPI + Uvicorn containerized service |
-| **Interactive API Docs** | **Swagger UI** | [`/docs`](https://geovision-api-8gci.onrender.com/docs) | Live interactive OpenAPI execution & testing |
-| **Alternative API Reference** | **ReDoc** | [`/redoc`](https://geovision-api-8gci.onrender.com/redoc) | Clean formatted API schema documentation |
-| **Health Check Probe** | **Render** | [`/health`](https://geovision-api-8gci.onrender.com/health) | Subsystem health & model status probe |
+| **REST API Gateway** | **Render** | [`https://geovision-api-9gci.onrender.com`](https://geovision-api-9gci.onrender.com) | FastAPI + Uvicorn containerized service |
+| **Interactive API Docs** | **Swagger UI** | [`/docs`](https://geovision-api-9gci.onrender.com/docs) | Live interactive OpenAPI execution & testing |
+| **Alternative API Reference** | **ReDoc** | [`/redoc`](https://geovision-api-9gci.onrender.com/redoc) | Clean formatted API schema documentation |
+| **Health Check Probe** | **Render** | [`/health`](https://geovision-api-9gci.onrender.com/health) | Subsystem health & model status probe |
+
 
 
 ---
