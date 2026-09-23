@@ -22,7 +22,6 @@ from geovision.api.schemas import (
 )
 from geovision.api.services import GeoVisionServices, decode_image_bytes
 from geovision.config import load_config
-from geovision.vlm.evidence import EvidenceSynthesizer
 
 # Global services container
 services: GeoVisionServices | None = None
@@ -232,6 +231,8 @@ def create_app() -> FastAPI:
                 detail=f"Invalid image format: {e}",
             )
 
+        from geovision.vlm.evidence import EvidenceSynthesizer
+
         det_raw = services.get_detector().predict(image_np)
         seg_res = services.run_segmentation(image_np, resolution_m=resolution_m)
 
@@ -239,6 +240,7 @@ def create_app() -> FastAPI:
             detection_result=det_raw,
             segmentation_result=seg_res,
         )
+
 
         latency_ms = (time.perf_counter() - t0) * 1000.0
         return EvidenceExtractionResponse(

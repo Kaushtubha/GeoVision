@@ -4,19 +4,20 @@ from __future__ import annotations
 
 import io
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from PIL import Image
 
-from geovision.change import SiameseChangeDetector, detect_changes
 from geovision.config import GeoVisionConfig, load_config
 from geovision.constants import LANDCOVER_CLASSES
-from geovision.detection import YOLODetector
-from geovision.retrieval import SatelliteSceneEmbedder, SceneVectorIndex
-from geovision.segmentation import LandCoverSegmenter, segment_image
-from geovision.vlm.assistant import GroundedEarthAssistant
-from geovision.vlm.evidence import EarthObservationEvidence, EvidenceSynthesizer
+
+if TYPE_CHECKING:
+    from geovision.change import SiameseChangeDetector
+    from geovision.detection import YOLODetector
+    from geovision.retrieval import SatelliteSceneEmbedder, SceneVectorIndex
+    from geovision.segmentation import LandCoverSegmenter
+    from geovision.vlm.assistant import GroundedEarthAssistant
 
 
 def decode_image_bytes(image_bytes: bytes) -> np.ndarray:
@@ -39,10 +40,10 @@ class GeoVisionServices:
         self._embedder: SatelliteSceneEmbedder | None = None
         self._vector_index: SceneVectorIndex | None = None
         self._assistant: GroundedEarthAssistant | None = None
-        self._synthesizer = EvidenceSynthesizer()
 
     def get_detector(self) -> YOLODetector:
         if self._detector is None:
+            from geovision.detection import YOLODetector
             self._detector = YOLODetector(
                 model_path=self.config.detection.model_name,
                 device=self.device,
@@ -51,6 +52,7 @@ class GeoVisionServices:
 
     def get_segmenter(self) -> LandCoverSegmenter:
         if self._segmenter is None:
+            from geovision.segmentation import LandCoverSegmenter
             self._segmenter = LandCoverSegmenter(
                 encoder_name=self.config.segmentation.encoder_name,
                 num_classes=self.config.segmentation.num_classes,
@@ -60,6 +62,7 @@ class GeoVisionServices:
 
     def get_change_detector(self) -> SiameseChangeDetector:
         if self._change_detector is None:
+            from geovision.change import SiameseChangeDetector
             self._change_detector = SiameseChangeDetector(
                 device=self.device,
             )
@@ -67,6 +70,7 @@ class GeoVisionServices:
 
     def get_embedder(self) -> SatelliteSceneEmbedder:
         if self._embedder is None:
+            from geovision.retrieval import SatelliteSceneEmbedder
             self._embedder = SatelliteSceneEmbedder(
                 model_name=self.config.retrieval.model_name,
                 pretrained=None,  # Use offline/instant lightweight embedder for API serving
@@ -77,6 +81,7 @@ class GeoVisionServices:
 
     def get_vector_index(self) -> SceneVectorIndex:
         if self._vector_index is None:
+            from geovision.retrieval import SceneVectorIndex
             self._vector_index = SceneVectorIndex(
                 collection_name="geovision_scenes",
                 vector_size=self.config.retrieval.embedding_dim,
@@ -86,8 +91,10 @@ class GeoVisionServices:
 
     def get_assistant(self) -> GroundedEarthAssistant:
         if self._assistant is None:
+            from geovision.vlm.assistant import GroundedEarthAssistant
             self._assistant = GroundedEarthAssistant(strictness="strict")
         return self._assistant
+
 
     def run_detection(self, image_np: np.ndarray, conf_thresh: float = 0.25) -> dict[str, Any]:
         """Run object detection on an RGB image array."""
@@ -126,6 +133,7 @@ class GeoVisionServices:
     def run_segmentation(self, image_np: np.ndarray, resolution_m: float = 1.0) -> dict[str, Any]:
         """Run land-cover segmentation on an RGB image array."""
         t0 = time.perf_counter()
+        from geovision.segmentation import segment_image
         segmenter = self.get_segmenter()
         tile_sz = min(self.config.segmentation.image_size, image_np.shape[0], image_np.shape[1])
         if tile_sz < 64:
@@ -172,6 +180,7 @@ class GeoVisionServices:
     ) -> dict[str, Any]:
         """Run bi-temporal change detection."""
         t0 = time.perf_counter()
+        from geovision.change import detect_changes
         change_det = self.get_change_detector()
         tile_sz = min(self.config.change.image_size, img_t1.shape[0], img_t1.shape[1])
         if tile_sz < 64:
@@ -239,6 +248,8 @@ class GeoVisionServices:
     ) -> dict[str, Any]:
         """Run grounded VLM Earth Assistant inference."""
         t0 = time.perf_counter()
+        from geovision.vlm.assistant import GroundedEarthAssistant
+        from geovision.vlm.evidence import EarthObservationEvidence, EvidenceSynthesizer
         assistant = GroundedEarthAssistant(strictness="strict")
 
         # Synthesize evidence if raw context provided
@@ -276,3 +287,4 @@ class GeoVisionServices:
             "is_grounded": report.is_grounded,
             "latency_ms": round(latency_ms, 2),
         }
+
