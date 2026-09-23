@@ -5,7 +5,8 @@ FROM python:3.11-slim AS base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    DEBIAN_FRONTEND=noninteractive
+    DEBIAN_FRONTEND=noninteractive \
+    PORT=10000
 
 # System dependencies for GDAL/PROJ and OpenCV image processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,8 +31,8 @@ RUN pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-deps -e .
 
-# Expose FastAPI port
-EXPOSE 8000
+# Expose Render standard container port
+EXPOSE 10000
 
 # Launch production server with dynamic port support
 CMD ["python", "scripts/serve.py"]

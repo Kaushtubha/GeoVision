@@ -19,7 +19,7 @@ logger = get_logger("geovision.serve")
 
 def main() -> None:
     default_host = os.getenv("HOST", "0.0.0.0")
-    default_port = int(os.getenv("PORT", "8000"))
+    default_port = int(os.getenv("PORT", "10000"))
 
     parser = argparse.ArgumentParser(description="GeoVision FastAPI Production Server")
     parser.add_argument("--host", type=str, default=default_host, help="Host address to bind")
