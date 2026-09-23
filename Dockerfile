@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for GeoVision Serving & Inference
-FROM python:3.11-slim as base
+FROM python:3.11-slim AS base
 
 # Prevent Python from writing .pyc and buffer output
 ENV PYTHONUNBUFFERED=1 \
@@ -18,15 +18,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install project dependencies
-COPY pyproject.toml README.md ./
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install .
-
-# Copy application source and configs
+# Copy application source, configs, and dependencies before installing
+COPY requirements.txt pyproject.toml README.md ./
 COPY geovision/ /app/geovision/
 COPY configs/ /app/configs/
 COPY scripts/ /app/scripts/
+
+# Install project dependencies
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install .
 
 # Expose FastAPI port
 EXPOSE 8000
