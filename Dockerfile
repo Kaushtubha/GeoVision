@@ -18,15 +18,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy application source, configs, and dependencies before installing
+# Copy requirements and project files
 COPY requirements.txt pyproject.toml README.md ./
 COPY geovision/ /app/geovision/
 COPY configs/ /app/configs/
 COPY scripts/ /app/scripts/
 
-# Install project dependencies
+# Install CPU-optimized PyTorch first for rapid lightweight deployment, then full requirements
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install .
+    pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-deps -e .
 
 # Expose FastAPI port
 EXPOSE 8000
