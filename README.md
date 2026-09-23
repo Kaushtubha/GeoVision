@@ -2,7 +2,7 @@
 
 ### Multimodal Satellite Intelligence & Earth Observation Platform
 
-[![Live App](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://geovision-amber.vercel.app)
+[![Live App](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://geo-vision-delta.vercel.app)
 [![API Status](https://img.shields.io/badge/API%20Live-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://geovision-api-8gci.onrender.com)
 [![Swagger Docs](https://img.shields.io/badge/Swagger-Interactive%20Docs-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://geovision-api-8gci.onrender.com/docs)
 
@@ -26,11 +26,12 @@ The platform is deployed and publicly accessible on 100% free-tier infrastructur
 
 | Service | Host | Live URL | Description |
 | :--- | :--- | :--- | :--- |
-| **Mission Control Dashboard** | **Vercel** | [Live Web App](https://geovision-amber.vercel.app) | React 18 + Vite + Tailwind CSS SPA |
+| **Mission Control Dashboard** | **Vercel** | [https://geo-vision-delta.vercel.app](https://geo-vision-delta.vercel.app) | React 18 + Vite + Tailwind CSS SPA |
 | **REST API Gateway** | **Render** | [`https://geovision-api-8gci.onrender.com`](https://geovision-api-8gci.onrender.com) | FastAPI + Uvicorn containerized service |
 | **Interactive API Docs** | **Swagger UI** | [`/docs`](https://geovision-api-8gci.onrender.com/docs) | Live interactive OpenAPI execution & testing |
 | **Alternative API Reference** | **ReDoc** | [`/redoc`](https://geovision-api-8gci.onrender.com/redoc) | Clean formatted API schema documentation |
 | **Health Check Probe** | **Render** | [`/health`](https://geovision-api-8gci.onrender.com/health) | Subsystem health & model status probe |
+
 
 ---
 
