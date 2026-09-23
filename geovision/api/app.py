@@ -68,6 +68,17 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.api_route("/", methods=["GET", "HEAD"], tags=["Root"])
+    async def root():
+        """Root status probe for cloud platforms and load balancers."""
+        return {
+            "status": "ok",
+            "service": "GeoVision Multimodal Earth Observation API",
+            "version": __version__,
+            "docs": "/docs",
+            "health": "/health",
+        }
+
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check():
         """Check API service health and subsystem status."""
