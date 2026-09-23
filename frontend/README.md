@@ -1,6 +1,12 @@
 # GeoVision Earth Observation Intelligence Platform — Frontend
 
+[![Live App](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://geovision-amber.vercel.app)
+[![API Status](https://img.shields.io/badge/API%20Live-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://geovision-api-8gci.onrender.com)
+
 Production React & TypeScript frontend for the GeoVision Multimodal Earth Observation platform.
+
+- **Live Production App**: [https://geovision-amber.vercel.app](https://geovision-amber.vercel.app)
+- **Backend API Gateway**: [https://geovision-api-8gci.onrender.com](https://geovision-api-8gci.onrender.com)
 
 ## Architecture
 
@@ -8,6 +14,7 @@ Production React & TypeScript frontend for the GeoVision Multimodal Earth Observ
 - **Styling**: Tailwind CSS (Mission Control Dark Palette) + Lucide Icons
 - **Routing**: React Router DOM v6
 - **API Layer**: Typed fetch client (`src/services/api.ts`) matching FastAPI Pydantic schemas (`src/types/api.ts`)
+
 
 ## Directory Layout
 
