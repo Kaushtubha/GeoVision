@@ -9,29 +9,30 @@ import {
   AlertCircle,
   Clock,
   Eye,
-  Crosshair,
-  Maximize2,
-  PieChart,
-  Tag,
+  ZoomIn,
+  ZoomOut,
+  Sparkles,
+  Grid,
+  CheckCircle2,
   Loader2,
 } from 'lucide-react';
 import { geoVisionApi } from '@/services/api';
 import type { DetectionResponse, SegmentationResponse, BBoxItem } from '@/types/api';
+import { SAMPLE_SATELLITE_SCENES, dataUrlToFile } from '@/utils/sampleImages';
 
 type AnalysisMode = 'detection' | 'segmentation';
 
-// Color mapping for detection classes
 const CLASS_COLORS = [
-  '#06b6d4', // cyan-500
-  '#10b981', // emerald-500
-  '#f59e0b', // amber-500
-  '#ec4899', // pink-500
-  '#8b5cf6', // violet-500
-  '#3b82f6', // blue-500
-  '#ef4444', // red-500
-  '#14b8a6', // teal-500
-  '#f97316', // orange-500
-  '#a855f7', // purple-500
+  '#10b981', // emerald
+  '#06b6d4', // cyan
+  '#f59e0b', // amber
+  '#ec4899', // pink
+  '#8b5cf6', // violet
+  '#3b82f6', // blue
+  '#ef4444', // red
+  '#14b8a6', // teal
+  '#f97316', // orange
+  '#a855f7', // purple
 ];
 
 const LANDCOVER_COLORS: Record<string, string> = {
@@ -66,6 +67,13 @@ export const ImageAnalysisPage: React.FC = () => {
   // Parameters
   const [confThresh, setConfThresh] = useState<number>(0.25);
   const [resolutionM, setResolutionM] = useState<number>(1.0);
+  const [maskOpacity, setMaskOpacity] = useState<number>(0.65);
+
+  // Canvas Inspector Tools
+  const [zoomLevel, setZoomLevel] = useState<number>(1.0);
+  const [showGrid, setShowGrid] = useState<boolean>(false);
+  const [showFalseColor, setShowFalseColor] = useState<boolean>(false);
+  const [selectedClassFilter, setSelectedClassFilter] = useState<string>('all');
 
   // States
   const [loading, setLoading] = useState<boolean>(false);
@@ -75,16 +83,15 @@ export const ImageAnalysisPage: React.FC = () => {
   const [detectionResult, setDetectionResult] = useState<DetectionResponse | null>(null);
   const [segmentationResult, setSegmentationResult] = useState<SegmentationResponse | null>(null);
   const [hoveredBoxIndex, setHoveredBoxIndex] = useState<number | null>(null);
-  const [showBoxes, setShowBoxes] = useState<boolean>(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
-  // Clean up object URLs
   useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (previewUrl && !previewUrl.startsWith('data:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
     };
   }, [previewUrl]);
 
@@ -92,29 +99,52 @@ export const ImageAnalysisPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl && !previewUrl.startsWith('data:')) URL.revokeObjectURL(previewUrl);
     setSelectedFile(file);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
 
-    // Read image dimensions
     const img = new Image();
     img.onload = () => {
       setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
     };
     img.src = url;
 
-    // Reset results
     setDetectionResult(null);
     setSegmentationResult(null);
     setError(null);
+    setZoomLevel(1.0);
+  };
+
+  const loadSampleScene = async (sceneId: string) => {
+    const scene = SAMPLE_SATELLITE_SCENES.find((s) => s.id === sceneId);
+    if (!scene) return;
+
+    try {
+      const file = await dataUrlToFile(scene.dataUrl, `${scene.id}.png`);
+      setSelectedFile(file);
+      setPreviewUrl(scene.dataUrl);
+
+      const img = new Image();
+      img.onload = () => {
+        setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.src = scene.dataUrl;
+
+      setDetectionResult(null);
+      setSegmentationResult(null);
+      setError(null);
+      setZoomLevel(1.0);
+    } catch (err: any) {
+      setError('Could not load sample scene: ' + err.message);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (previewUrl && !previewUrl.startsWith('data:')) URL.revokeObjectURL(previewUrl);
       setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
@@ -128,12 +158,13 @@ export const ImageAnalysisPage: React.FC = () => {
       setDetectionResult(null);
       setSegmentationResult(null);
       setError(null);
+      setZoomLevel(1.0);
     }
   };
 
   const runAnalysis = async () => {
     if (!selectedFile) {
-      setError('Please select or upload a satellite image first.');
+      setError('Please select an image or click a sample scene.');
       return;
     }
 
@@ -149,519 +180,517 @@ export const ImageAnalysisPage: React.FC = () => {
         setSegmentationResult(result);
       }
     } catch (err: any) {
-      setError(err.message || 'Analysis failed. Ensure the GeoVision backend is running.');
+      setError(err.message || 'Analysis pipeline failed. Ensure GeoVision backend is running.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Render bounding boxes onto Canvas overlay
-  useEffect(() => {
-    if (!canvasRef.current || !imageRef.current || !detectionResult || !showBoxes) {
-      if (canvasRef.current) {
-        const ctx = canvasRef.current.getContext('2d');
-        if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      }
-      return;
-    }
+  const clearAnalysis = () => {
+    if (previewUrl && !previewUrl.startsWith('data:')) URL.revokeObjectURL(previewUrl);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setImageSize(null);
+    setDetectionResult(null);
+    setSegmentationResult(null);
+    setError(null);
+    setZoomLevel(1.0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
-    const canvas = canvasRef.current;
-    const img = imageRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  // Filter boxes by class and confidence
+  const rawBoxes: BBoxItem[] = detectionResult?.detections || [];
+  const filteredBoxes = rawBoxes.filter((box: BBoxItem) => {
+    const matchesClass = selectedClassFilter === 'all' || box.class_name.toLowerCase() === selectedClassFilter.toLowerCase();
+    const matchesConf = box.confidence >= confThresh;
+    return matchesClass && matchesConf;
+  });
 
-    // Match canvas coordinate size to image display size
-    const displayWidth = img.clientWidth;
-    const displayHeight = img.clientHeight;
-    canvas.width = displayWidth;
-    canvas.height = displayHeight;
-
-    const originalH = detectionResult.image_shape[0] || imageSize?.height || displayHeight;
-    const originalW = detectionResult.image_shape[1] || imageSize?.width || displayWidth;
-
-    const scaleX = displayWidth / originalW;
-    const scaleY = displayHeight / originalH;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    detectionResult.detections.forEach((det: BBoxItem, index: number) => {
-      const isHovered = hoveredBoxIndex === index;
-      const color = CLASS_COLORS[det.class_id % CLASS_COLORS.length];
-
-      const x = det.xmin * scaleX;
-      const y = det.ymin * scaleY;
-      const w = (det.xmax - det.xmin) * scaleX;
-      const h = (det.ymax - det.ymin) * scaleY;
-
-      // Box outline
-      ctx.strokeStyle = color;
-      ctx.lineWidth = isHovered ? 3 : 2;
-      ctx.fillStyle = `${color}${isHovered ? '40' : '15'}`;
-
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeRect(x, y, w, h);
-
-      // Label background & text
-      const label = `${det.class_name} ${(det.confidence * 100).toFixed(0)}%`;
-      ctx.font = isHovered ? 'bold 12px JetBrains Mono, monospace' : '11px JetBrains Mono, monospace';
-      const textWidth = ctx.measureText(label).width;
-      const labelHeight = 18;
-
-      ctx.fillStyle = color;
-      ctx.fillRect(x, Math.max(0, y - labelHeight), textWidth + 8, labelHeight);
-
-      ctx.fillStyle = '#0f172a'; // dark space text
-      ctx.fillText(label, x + 4, Math.max(13, y - 4));
-    });
-  }, [detectionResult, hoveredBoxIndex, showBoxes, imageSize]);
-
-  // Aggregate detection count by class
-  const classCounts = detectionResult?.detections.reduce<Record<string, number>>((acc, cur) => {
-    acc[cur.class_name] = (acc[cur.class_name] || 0) + 1;
-    return acc;
-  }, {});
+  const uniqueClasses = Array.from(new Set(rawBoxes.map((b: BBoxItem) => b.class_name)));
 
   return (
-    <div className="space-y-6">
-      {/* Header & Mode Switcher */}
-      <div className="p-5 rounded-lg bg-space-900 border border-space-700/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Header Bar */}
+      <div className="glass-panel rounded-2xl p-5 border border-theme-border/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-cyan-400 font-mono text-xs uppercase tracking-wider mb-1">
+          <div className="flex items-center space-x-2 text-theme-accent font-mono text-xs uppercase tracking-wider font-semibold mb-1">
             <ScanLine className="w-4 h-4" />
-            <span>Earth Observation Core</span>
+            <span>High-Resolution Vision Core</span>
           </div>
-          <h1 className="text-xl font-bold text-white font-sans">
-            Satellite Optical Image Analysis
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-white">
+            Satellite Object Detection & Land-Cover Analysis
           </h1>
-          <p className="text-xs text-slate-400 mt-1 font-sans">
-            Execute high-resolution optical object detection or 5-class land-cover segmentation with precision area computation.
+          <p className="text-xs text-slate-300 mt-1 font-sans">
+            Inference engine for optical object identification, localized bounding boxes, and pixel-wise land classification.
           </p>
         </div>
 
-        {/* Mode Selector Tabs */}
-        <div className="flex items-center p-1 rounded-lg bg-space-950 border border-space-800 self-start md:self-auto">
+        {/* Mode Selector Pill */}
+        <div className="flex items-center p-1 rounded-xl bg-black/40 border border-theme-border-subtle self-start md:self-auto">
           <button
-            onClick={() => {
-              setMode('detection');
-              setError(null);
-            }}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-xs font-medium font-mono transition-all ${
+            onClick={() => setMode('detection')}
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
               mode === 'detection'
-                ? 'bg-cyan-600 text-white shadow-md shadow-cyan-900/40'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-theme-accent text-slate-950 shadow-glow-sm'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             <ScanLine className="w-3.5 h-3.5" />
             <span>Object Detection</span>
           </button>
           <button
-            onClick={() => {
-              setMode('segmentation');
-              setError(null);
-            }}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-xs font-medium font-mono transition-all ${
+            onClick={() => setMode('segmentation')}
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
               mode === 'segmentation'
-                ? 'bg-cyan-600 text-white shadow-md shadow-cyan-900/40'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-theme-accent text-slate-950 shadow-glow-sm'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Land-Cover Segmentation</span>
+            <span>Land Segmentation</span>
           </button>
         </div>
       </div>
 
-      {/* Control Parameters Bar */}
-      <div className="p-4 rounded-lg bg-space-900/80 border border-space-700/70 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-6">
-          {mode === 'detection' ? (
-            <div className="flex items-center space-x-3 text-xs font-mono">
-              <Sliders className="w-4 h-4 text-cyan-400" />
-              <span className="text-slate-300">Confidence Threshold:</span>
-              <input
-                type="range"
-                min="0.05"
-                max="0.95"
-                step="0.05"
-                value={confThresh}
-                onChange={(e) => setConfThresh(parseFloat(e.target.value))}
-                className="w-28 accent-cyan-500 cursor-pointer"
-              />
-              <span className="text-cyan-300 px-2 py-0.5 rounded bg-space-800 border border-space-700 font-bold">
-                {(confThresh * 100).toFixed(0)}%
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-3 text-xs font-mono">
-              <Sliders className="w-4 h-4 text-cyan-400" />
-              <span className="text-slate-300">Ground Resolution (m/px):</span>
-              <input
-                type="number"
-                min="0.1"
-                max="30.0"
-                step="0.1"
-                value={resolutionM}
-                onChange={(e) => setResolutionM(parseFloat(e.target.value) || 1.0)}
-                className="w-20 px-2 py-1 bg-space-950 border border-space-700 rounded text-cyan-300 text-center font-bold focus:outline-none focus:border-cyan-500"
-              />
-              <span className="text-slate-400 text-[11px]">meters/pixel</span>
-            </div>
-          )}
-
-          {detectionResult && mode === 'detection' && (
-            <button
-              onClick={() => setShowBoxes(!showBoxes)}
-              className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-space-800 border border-space-700 text-xs font-mono text-slate-300 hover:text-white"
-            >
-              <Eye className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{showBoxes ? 'Hide BBoxes' : 'Show BBoxes'}</span>
-            </button>
-          )}
+      {/* Preset Satellite Scenes Quick Ribbon */}
+      <div className="glass-card rounded-xl p-3.5 border border-theme-border-subtle flex items-center justify-between flex-wrap gap-2.5">
+        <div className="flex items-center space-x-2 text-xs font-mono text-slate-300">
+          <Sparkles className="w-4 h-4 text-theme-accent" />
+          <span className="font-semibold text-white">Quick Test Scenes:</span>
         </div>
-
-        {/* Execution Button */}
-        <div className="flex items-center space-x-3">
-          {selectedFile && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {SAMPLE_SATELLITE_SCENES.map((s) => (
             <button
-              onClick={() => {
-                setSelectedFile(null);
-                setPreviewUrl(null);
-                setDetectionResult(null);
-                setSegmentationResult(null);
-                setImageSize(null);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
-              className="px-3 py-1.5 rounded bg-space-800 hover:bg-space-750 text-slate-400 hover:text-slate-200 text-xs font-mono flex items-center space-x-1.5 border border-space-700"
+              key={s.id}
+              onClick={() => loadSampleScene(s.id)}
+              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-theme-accent/20 border border-white/10 hover:border-theme-accent/50 text-[11px] font-mono text-slate-200 hover:text-theme-accent transition-all flex items-center space-x-1.5"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Clear</span>
+              <span>{s.category}: {s.name}</span>
             </button>
-          )}
-
-          <button
-            onClick={runAnalysis}
-            disabled={loading || !selectedFile}
-            className={`px-4 py-2 rounded-md text-xs font-mono font-bold flex items-center space-x-2 transition-all shadow-md ${
-              loading || !selectedFile
-                ? 'bg-space-800 text-slate-500 border border-space-700 cursor-not-allowed'
-                : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-900/30'
-            }`}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-cyan-200" />
-                <span>Processing Model Pipeline...</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 fill-current" />
-                <span>Run {mode === 'detection' ? 'Object Detection' : 'Land-Cover Segmentation'}</span>
-              </>
-            )}
-          </button>
+          ))}
         </div>
       </div>
-
-      {/* Error Alert */}
-      {error && (
-        <div className="p-4 rounded-lg bg-rose-950/40 border border-rose-800/80 text-rose-300 text-xs flex items-center space-x-3">
-          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-          <div>
-            <p className="font-semibold font-mono">Inference Engine Error</p>
-            <p className="text-rose-400 font-mono mt-0.5">{error}</p>
-          </div>
-        </div>
-      )}
 
       {/* Main Workspace Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Image Canvas & Upload Dropzone */}
-        <div className="lg:col-span-7 space-y-4">
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-            className={`relative rounded-lg border-2 border-dashed transition-all overflow-hidden flex flex-col items-center justify-center min-h-[420px] bg-space-900/90 ${
-              previewUrl
-                ? 'border-space-700 p-2'
-                : 'border-space-700/80 hover:border-cyan-500/50 p-8 cursor-pointer'
-            }`}
-            onClick={() => !previewUrl && fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.tif,.tiff"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+        {/* Left Column: Upload & Parameters Panel (4 cols) */}
+        <div className="lg:col-span-4 space-y-5">
+          {/* File Upload / Dropzone */}
+          <div className="glass-panel rounded-2xl p-5 border border-theme-border/60 space-y-4">
+            <h2 className="text-xs font-mono uppercase tracking-wider font-bold text-slate-300 flex items-center gap-2">
+              <Upload className="w-4 h-4 text-theme-accent" />
+              <span>Imagery Source</span>
+            </h2>
 
-            {previewUrl ? (
-              <div className="relative w-full flex items-center justify-center bg-black/40 rounded overflow-hidden">
-                <img
-                  ref={imageRef}
-                  src={previewUrl}
-                  alt="Satellite Observation"
-                  className="max-h-[520px] w-auto object-contain rounded select-none"
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                selectedFile
+                  ? 'border-theme-accent/60 bg-theme-accent/5'
+                  : 'border-white/15 hover:border-theme-accent/50 bg-black/20 hover:bg-black/30'
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <div className="w-12 h-12 rounded-xl bg-white/5 mx-auto flex items-center justify-center text-theme-accent mb-3 shadow-glow-sm">
+                <Upload className="w-6 h-6" />
+              </div>
+              {selectedFile ? (
+                <div>
+                  <p className="text-xs font-semibold text-white truncate max-w-full">{selectedFile.name}</p>
+                  <p className="text-[10px] font-mono text-slate-400 mt-1">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {imageSize ? `${imageSize.width}×${imageSize.height}px` : 'Raster Ready'}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs font-semibold text-slate-200">Upload Satellite Capture</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Drag & drop or browse GeoTIFF, PNG, JPEG</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Model Hyperparameters Panel */}
+          <div className="glass-panel rounded-2xl p-5 border border-theme-border/60 space-y-4">
+            <h2 className="text-xs font-mono uppercase tracking-wider font-bold text-slate-300 flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-theme-accent" />
+              <span>Inference Parameters</span>
+            </h2>
+
+            {mode === 'detection' ? (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-xs font-mono">
+                  <span className="text-slate-300">Confidence Threshold:</span>
+                  <span className="text-theme-accent font-bold px-2 py-0.5 rounded bg-theme-accent/15 border border-theme-accent/30">
+                    {confThresh.toFixed(2)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.95"
+                  step="0.05"
+                  value={confThresh}
+                  onChange={(e) => setConfThresh(parseFloat(e.target.value))}
+                  className="w-full cursor-pointer"
                 />
-                {/* Canvas Overlay for Detection Boxes */}
-                {mode === 'detection' && detectionResult && (
-                  <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                  />
-                )}
+                <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                  <span>0.05 (High Recall)</span>
+                  <span>0.95 (High Precision)</span>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center text-center space-y-3">
-                <div className="w-14 h-14 rounded-full bg-space-850 border border-space-700 flex items-center justify-center text-cyan-400 shadow-inner">
-                  <Upload className="w-6 h-6" />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="text-slate-300">Ground Resolution (GSD):</span>
+                    <span className="text-theme-accent font-bold px-2 py-0.5 rounded bg-theme-accent/15 border border-theme-accent/30">
+                      {resolutionM.toFixed(1)} m/px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="10.0"
+                    step="0.1"
+                    value={resolutionM}
+                    onChange={(e) => setResolutionM(parseFloat(e.target.value))}
+                    className="w-full cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                    <span>0.1m (High-Res WorldView)</span>
+                    <span>10.0m (Sentinel-2)</span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white font-sans">
-                    Drop satellite image here or click to browse
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1 font-mono">
-                    Supports Optical GeoTIFF, PNG, JPEG scenes
-                  </p>
+
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="text-slate-300">Mask Overlay Opacity:</span>
+                    <span className="text-theme-accent font-bold px-2 py-0.5 rounded bg-theme-accent/15 border border-theme-accent/30">
+                      {Math.round(maskOpacity * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="1.0"
+                    step="0.05"
+                    value={maskOpacity}
+                    onChange={(e) => setMaskOpacity(parseFloat(e.target.value))}
+                    className="w-full cursor-pointer"
+                  />
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Image Details Pill */}
-          {selectedFile && imageSize && (
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-3 py-2 rounded bg-space-900 border border-space-750">
-              <span className="truncate max-w-xs">{selectedFile.name}</span>
-              <span>
-                {imageSize.width} × {imageSize.height} px • {(selectedFile.size / 1024).toFixed(1)} KB
-              </span>
+            {/* Run / Reset Action Buttons */}
+            <div className="pt-2 flex gap-3">
+              <button
+                onClick={runAnalysis}
+                disabled={loading || !selectedFile}
+                className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all shadow-glow-sm ${
+                  loading || !selectedFile
+                    ? 'bg-white/10 text-slate-500 cursor-not-allowed border border-white/5'
+                    : 'bg-theme-accent text-slate-950 hover:opacity-95'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>Inference Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>Execute {mode === 'detection' ? 'Detection' : 'Segmentation'}</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={clearAnalysis}
+                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-colors"
+                title="Reset View"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
             </div>
-          )}
+
+            {error && (
+              <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-start space-x-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span className="leading-tight">{error}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Right Column: Telemetry & Results Breakdown */}
-        <div className="lg:col-span-5 space-y-4">
-          {/* Object Detection Results View */}
-          {mode === 'detection' && (
-            <div className="p-5 rounded-lg bg-space-900 border border-space-700 space-y-5">
-              <div className="flex items-center justify-between border-b border-space-750 pb-3">
-                <div className="flex items-center space-x-2">
-                  <Crosshair className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-white">
-                    Detection Telemetry
-                  </h3>
-                </div>
-                {detectionResult && (
-                  <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
-                    <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{detectionResult.latency_ms.toFixed(1)} ms</span>
-                  </div>
+        {/* Right Column: Interactive Satellite Viewport & Result Metrics (8 cols) */}
+        <div className="lg:col-span-8 space-y-5">
+          {/* Viewport Card */}
+          <div className="glass-panel rounded-2xl p-5 border border-theme-border/60 space-y-4">
+            {/* Viewport Toolbar */}
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-white/10">
+              <div className="flex items-center space-x-2 text-xs font-mono text-slate-300">
+                <Eye className="w-4 h-4 text-theme-accent" />
+                <span className="font-semibold text-white">Interactive Observation Canvas</span>
+                {imageSize && (
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-400 border border-white/5">
+                    {imageSize.width} × {imageSize.height} px
+                  </span>
                 )}
               </div>
 
-              {detectionResult ? (
-                <>
-                  {/* Summary Metric Cards */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded bg-space-850 border border-space-750">
-                      <p className="text-[10px] font-mono text-slate-400 uppercase">Total Detections</p>
-                      <p className="text-2xl font-mono font-bold text-cyan-300 mt-1">
-                        {detectionResult.count}
-                      </p>
-                    </div>
-                    <div className="p-3.5 rounded bg-space-850 border border-space-750">
-                      <p className="text-[10px] font-mono text-slate-400 uppercase">Input Resolution</p>
-                      <p className="text-xs font-mono font-semibold text-slate-200 mt-2">
-                        {detectionResult.image_shape[1]} × {detectionResult.image_shape[0]} px
-                      </p>
-                    </div>
-                  </div>
+              {/* Canvas Controls */}
+              <div className="flex items-center space-x-1.5 text-xs font-mono">
+                <button
+                  onClick={() => setZoomLevel((z) => Math.max(0.5, z - 0.25))}
+                  className="p-1.5 rounded-lg bg-black/40 hover:bg-white/10 border border-white/10 text-slate-300"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="px-2 py-1 rounded bg-black/40 text-[10px] text-slate-300 border border-white/10">
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoomLevel((z) => Math.min(3.0, z + 0.25))}
+                  className="p-1.5 rounded-lg bg-black/40 hover:bg-white/10 border border-white/10 text-slate-300"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setShowGrid(!showGrid)}
+                  className={`p-1.5 rounded-lg border text-xs ${
+                    showGrid ? 'bg-theme-accent/20 border-theme-accent/50 text-theme-accent' : 'bg-black/40 border-white/10 text-slate-400'
+                  }`}
+                  title="Toggle Grid HUD"
+                >
+                  <Grid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setShowFalseColor(!showFalseColor)}
+                  className={`px-2 py-1 rounded-lg border text-[10px] ${
+                    showFalseColor ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-black/40 border-white/10 text-slate-400'
+                  }`}
+                  title="Simulate Infrared / NDVI"
+                >
+                  IR SIM
+                </button>
+              </div>
+            </div>
 
-                  {/* Class Breakdown Badges */}
-                  {classCounts && Object.keys(classCounts).length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-[11px] font-mono uppercase text-slate-400">Detected Classes</p>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(classCounts).map(([cls, cnt], idx) => (
-                          <span
-                            key={cls}
-                            className="px-2.5 py-1 rounded text-xs font-mono font-medium border flex items-center space-x-1.5"
-                            style={{
-                              backgroundColor: `${CLASS_COLORS[idx % CLASS_COLORS.length]}15`,
-                              borderColor: `${CLASS_COLORS[idx % CLASS_COLORS.length]}50`,
-                              color: CLASS_COLORS[idx % CLASS_COLORS.length],
-                            }}
-                          >
-                            <Tag className="w-3 h-3" />
-                            <span>{cls}</span>
-                            <span className="font-bold">({cnt})</span>
-                          </span>
-                        ))}
+            {/* Viewport Screen */}
+            <div 
+              ref={canvasContainerRef}
+              className="relative min-h-[420px] max-h-[560px] rounded-xl overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center select-none"
+            >
+              {previewUrl ? (
+                <div 
+                  className="relative transition-transform duration-150 flex items-center justify-center max-w-full max-h-full"
+                  style={{
+                    transform: `scale(${zoomLevel})`,
+                    filter: showFalseColor ? 'contrast(1.4) hue-rotate(180deg) saturate(2)' : 'none',
+                  }}
+                >
+                  <img
+                    src={previewUrl}
+                    alt="Satellite Observation"
+                    className="max-h-[480px] w-auto object-contain rounded"
+                  />
+
+                  {/* Object Detection Bounding Boxes */}
+                  {mode === 'detection' && filteredBoxes.map((box: BBoxItem, idx: number) => {
+                    const color = CLASS_COLORS[idx % CLASS_COLORS.length];
+                    const isHovered = hoveredBoxIndex === idx;
+
+                    return (
+                      <div
+                        key={idx}
+                        onMouseEnter={() => setHoveredBoxIndex(idx)}
+                        onMouseLeave={() => setHoveredBoxIndex(null)}
+                        className="absolute cursor-pointer transition-all"
+                        style={{
+                          left: `${box.xmin}%`,
+                          top: `${box.ymin}%`,
+                          width: `${box.xmax - box.xmin}%`,
+                          height: `${box.ymax - box.ymin}%`,
+                          border: `2px solid ${color}`,
+                          backgroundColor: isHovered ? `${color}33` : `${color}15`,
+                          boxShadow: isHovered ? `0 0 15px ${color}` : 'none',
+                          zIndex: isHovered ? 30 : 10,
+                        }}
+                      >
+                        {/* Box label tag */}
+                        <div
+                          className="absolute -top-6 left-0 text-[10px] font-mono px-1.5 py-0.5 rounded text-white font-bold whitespace-nowrap shadow"
+                          style={{ backgroundColor: color }}
+                        >
+                          {box.class_name} ({Math.round(box.confidence * 100)}%)
+                        </div>
                       </div>
+                    );
+                  })}
+
+                  {/* Grid HUD Overlay */}
+                  {showGrid && (
+                    <div className="absolute inset-0 pointer-events-none grid grid-cols-6 grid-rows-6 border border-cyan-500/20">
+                      {Array.from({ length: 36 }).map((_, i) => (
+                        <div key={i} className="border border-cyan-500/10" />
+                      ))}
                     </div>
                   )}
-
-                  {/* Detected Bounding Boxes Table */}
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-mono uppercase text-slate-400">
-                      Bounding Box Registry ({detectionResult.detections.length})
-                    </p>
-                    <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 text-xs font-mono">
-                      {detectionResult.detections.map((box: BBoxItem, index: number) => {
-                        const color = CLASS_COLORS[box.class_id % CLASS_COLORS.length];
-                        const isHovered = hoveredBoxIndex === index;
-                        return (
-                          <div
-                            key={index}
-                            onMouseEnter={() => setHoveredBoxIndex(index)}
-                            onMouseLeave={() => setHoveredBoxIndex(null)}
-                            className={`p-2 rounded border transition-colors cursor-pointer flex items-center justify-between ${
-                              isHovered
-                                ? 'bg-space-800 border-cyan-500/80 text-white'
-                                : 'bg-space-850/60 border-space-750 text-slate-300'
-                            }`}
-                          >
-                            <div className="flex items-center space-x-2">
-                              <span
-                                className="w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: color }}
-                              />
-                              <span className="font-semibold text-white">{box.class_name}</span>
-                              <span className="text-[10px] text-slate-400">
-                                [{box.xmin.toFixed(0)}, {box.ymin.toFixed(0)}, {box.xmax.toFixed(0)}, {box.ymax.toFixed(0)}]
-                              </span>
-                            </div>
-                            <span className="font-bold text-cyan-300">
-                              {(box.confidence * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
+                </div>
               ) : (
-                <div className="p-8 text-center space-y-2 text-slate-400">
-                  <Maximize2 className="w-8 h-8 text-slate-600 mx-auto" />
-                  <p className="text-xs font-mono">
-                    Upload an optical image and click &quot;Run Object Detection&quot; to inspect detections.
+                <div className="text-center p-8 space-y-3 text-slate-500">
+                  <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center text-slate-400">
+                    <ScanLine className="w-8 h-8" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-300">No Satellite Imagery Loaded</p>
+                  <p className="text-xs text-slate-400 max-w-sm">
+                    Select a satellite file or click one of the quick test scenarios above to initialize the vision pipeline.
                   </p>
                 </div>
               )}
             </div>
-          )}
+          </div>
 
-          {/* Semantic Segmentation Results View */}
-          {mode === 'segmentation' && (
-            <div className="p-5 rounded-lg bg-space-900 border border-space-700 space-y-5">
-              <div className="flex items-center justify-between border-b border-space-750 pb-3">
+          {/* Results Analytics Panel */}
+          {detectionResult && mode === 'detection' && (
+            <div className="glass-panel rounded-2xl p-5 border border-theme-border/60 space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center space-x-2">
-                  <PieChart className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-white">
-                    Land-Cover Distribution
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-sm font-display font-bold text-white">
+                    Detection Results: <span className="text-theme-accent">{filteredBoxes.length} Objects Found</span>
                   </h3>
                 </div>
-                {segmentationResult && (
-                  <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
-                    <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{segmentationResult.latency_ms.toFixed(1)} ms</span>
-                  </div>
-                )}
+                <div className="flex items-center space-x-3 text-xs font-mono text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-theme-accent" />
+                    <span>{detectionResult.latency_ms ? `${detectionResult.latency_ms.toFixed(1)} ms` : '< 200 ms'}</span>
+                  </span>
+                </div>
               </div>
 
-              {segmentationResult ? (
-                <>
-                  {/* Total Area Statistics */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded bg-space-850 border border-space-750">
-                      <p className="text-[10px] font-mono text-slate-400 uppercase">Total Surface Area</p>
-                      <p className="text-xl font-mono font-bold text-cyan-300 mt-1">
-                        {segmentationResult.total_area_hectares.toFixed(2)} <span className="text-xs text-slate-400">ha</span>
-                      </p>
-                    </div>
-                    <div className="p-3.5 rounded bg-space-850 border border-space-750">
-                      <p className="text-[10px] font-mono text-slate-400 uppercase">Area in km²</p>
-                      <p className="text-xl font-mono font-bold text-emerald-300 mt-1">
-                        {(segmentationResult.total_area_hectares / 100).toFixed(3)} <span className="text-xs text-slate-400">km²</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Coverage Proportional Stacked Bar */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                      <span>Land-Cover Composition</span>
-                      <span>100%</span>
-                    </div>
-                    <div className="w-full h-3 rounded-full bg-space-950 overflow-hidden flex">
-                      {segmentationResult.classes.map((cls, idx) => {
-                        const color = getLandcoverColor(cls.class_name, idx);
-                        return (
-                          <div
-                            key={cls.class_id}
-                            style={{
-                              width: `${cls.percentage}%`,
-                              backgroundColor: color,
-                            }}
-                            title={`${cls.class_name}: ${cls.percentage.toFixed(1)}%`}
-                            className="h-full transition-all"
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Class-wise Breakdown Table */}
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-mono uppercase text-slate-400">Class Breakdown Table</p>
-                    <div className="max-h-60 overflow-y-auto space-y-2 pr-1 text-xs font-mono">
-                      {segmentationResult.classes.map((cls, idx) => {
-                        const color = getLandcoverColor(cls.class_name, idx);
-                        return (
-                          <div
-                            key={cls.class_id}
-                            className="p-3 rounded bg-space-850 border border-space-750 space-y-2"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <span
-                                  className="w-3 h-3 rounded-sm"
-                                  style={{ backgroundColor: color }}
-                                />
-                                <span className="font-semibold text-white capitalize">
-                                  {cls.class_name}
-                                </span>
-                              </div>
-                              <span className="font-bold text-cyan-300">
-                                {cls.percentage.toFixed(1)}%
-                              </span>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-2 text-[10px] text-slate-400 pt-1 border-t border-space-750/60">
-                              <div>
-                                <span>Pixels:</span> <span className="text-slate-200">{cls.pixel_count.toLocaleString()}</span>
-                              </div>
-                              <div>
-                                <span>Hectares:</span> <span className="text-slate-200">{cls.area_hectares.toFixed(2)} ha</span>
-                              </div>
-                              <div>
-                                <span>km²:</span> <span className="text-slate-200">{cls.area_sqkm.toFixed(4)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="p-8 text-center space-y-2 text-slate-400">
-                  <Layers className="w-8 h-8 text-slate-600 mx-auto" />
-                  <p className="text-xs font-mono">
-                    Upload a scene and click &quot;Run Land-Cover Segmentation&quot; to calculate land use.
-                  </p>
+              {/* Class Filter Pills */}
+              {uniqueClasses.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-white/5">
+                  <span className="text-[11px] font-mono text-slate-400">Filter Class:</span>
+                  <button
+                    onClick={() => setSelectedClassFilter('all')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
+                      selectedClassFilter === 'all'
+                        ? 'bg-theme-accent text-slate-950 font-bold'
+                        : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                    }`}
+                  >
+                    All ({rawBoxes.length})
+                  </button>
+                  {uniqueClasses.map((cls: string) => {
+                    const count = rawBoxes.filter((b: BBoxItem) => b.class_name === cls).length;
+                    return (
+                      <button
+                        key={cls}
+                        onClick={() => setSelectedClassFilter(cls)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
+                          selectedClassFilter === cls
+                            ? 'bg-theme-accent text-slate-950 font-bold'
+                            : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                        }`}
+                      >
+                        {cls} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
               )}
+
+              {/* Detections List */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                {filteredBoxes.map((box: BBoxItem, i: number) => {
+                  const color = CLASS_COLORS[i % CLASS_COLORS.length];
+                  const isHovered = hoveredBoxIndex === i;
+
+                  return (
+                    <div
+                      key={i}
+                      onMouseEnter={() => setHoveredBoxIndex(i)}
+                      onMouseLeave={() => setHoveredBoxIndex(null)}
+                      className={`p-2.5 rounded-xl border text-xs font-mono transition-all cursor-pointer flex items-center justify-between ${
+                        isHovered
+                          ? 'bg-theme-accent/20 border-theme-accent text-white shadow-glow-sm'
+                          : 'bg-black/30 border-white/10 text-slate-300 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                        <span className="font-semibold text-white">{box.class_name}</span>
+                      </div>
+                      <span className="text-[11px] text-theme-accent font-bold">
+                        {Math.round(box.confidence * 100)}%
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {segmentationResult && mode === 'segmentation' && (
+            <div className="glass-panel rounded-2xl p-5 border border-theme-border/60 space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-sm font-display font-bold text-white">
+                    Land-Cover Dense Segmentation Breakdown
+                  </h3>
+                </div>
+                <div className="text-xs font-mono text-slate-400 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-theme-accent" />
+                  <span>{segmentationResult.latency_ms ? `${segmentationResult.latency_ms.toFixed(1)} ms` : '< 350 ms'}</span>
+                </div>
+              </div>
+
+              {/* Area Distribution Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {(segmentationResult.classes || []).map((item, i) => {
+                  const color = getLandcoverColor(item.class_name, i);
+                  return (
+                    <div
+                      key={item.class_id || item.class_name}
+                      className="p-3 rounded-xl bg-black/30 border border-white/10 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="capitalize text-white flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                          {item.class_name}
+                        </span>
+                        <span className="font-mono text-theme-accent">{item.percentage?.toFixed(1) || 0}%</span>
+                      </div>
+                      <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${item.percentage || 0}%`, backgroundColor: color }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] font-mono text-slate-400 pt-1">
+                        <span>{item.area_hectares?.toFixed(2) || 0} ha</span>
+                        <span>{item.area_sqkm?.toFixed(3) || 0} km²</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
