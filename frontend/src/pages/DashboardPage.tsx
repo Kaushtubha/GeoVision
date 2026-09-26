@@ -73,7 +73,7 @@ export const DashboardPage: React.FC = () => {
       route: '/analysis',
       icon: Layers,
       status: health?.models_status?.segmentation ? 'Active' : 'Standby',
-      tag: 'DeepLabV3+',
+      tag: 'PyTorch UNet',
       latency: '351 ms',
       throughput: '2.8 FPS',
       gradient: 'from-cyan-500/10 to-blue-500/5',

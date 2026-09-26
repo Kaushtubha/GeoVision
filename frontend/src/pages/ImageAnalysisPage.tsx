@@ -40,14 +40,17 @@ const LANDCOVER_COLORS: Record<string, string> = {
   building: '#ef4444',
   built: '#ef4444',
   vegetation: '#10b981',
+  woodland: '#10b981',
   forest: '#059669',
   tree: '#059669',
   water: '#0ea5e9',
   river: '#0ea5e9',
+  road: '#f59e0b',
   agriculture: '#eab308',
   crop: '#eab308',
   barren: '#a8a29e',
   soil: '#a8a29e',
+  background: '#64748b',
 };
 
 function getLandcoverColor(name: string, index: number): string {
