@@ -308,6 +308,37 @@ export const EarthAssistantPage: React.FC = () => {
 
         {/* Right Column: Chat Stream & Interactive Prompting (7 cols) */}
         <div className="lg:col-span-7 flex flex-col h-[650px] glass-panel rounded-2xl border border-theme-border/60 overflow-hidden">
+          {/* Chat Stream Header */}
+          <div className="px-5 py-3 border-b border-white/10 bg-black/40 flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">Earth AI Stream</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+                Grounding Active
+              </span>
+            </div>
+            {messages.length > 1 && (
+              <button
+                onClick={() => {
+                  setMessages([
+                    {
+                      id: 'welcome',
+                      role: 'assistant',
+                      content:
+                        'Welcome to the Grounded Earth AI Assistant. Upload a satellite scene or pick a preset scenario, and I will extract computer-vision evidence (optical detections, land-cover segments, spatial areas) to answer your queries with verified, grounded spatial citations.',
+                      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    },
+                  ]);
+                }}
+                className="text-[11px] font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
+                title="Reset conversation"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
+
           {/* Chat Messages Log */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
             {messages.map((msg) => (
