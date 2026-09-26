@@ -99,6 +99,13 @@ export const SystemStatusPage: React.FC = () => {
 
         <div className="flex items-center space-x-3">
           <button
+            onClick={runAllEndpointTests}
+            className="px-4 py-2 rounded-xl bg-theme-accent hover:opacity-90 text-slate-950 text-xs font-mono font-bold flex items-center space-x-2 transition-all shadow-glow-sm"
+          >
+            <Play className="w-3.5 h-3.5" />
+            <span>Run All API Tests</span>
+          </button>
+          <button
             onClick={fetchHealth}
             disabled={loading}
             className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white border border-white/10 text-xs font-mono flex items-center space-x-2 transition-colors"
