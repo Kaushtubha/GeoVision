@@ -63,10 +63,16 @@ To host GeoVision publicly with zero infrastructure cost:
 3. Hugging Face automatically builds the `Dockerfile` and deploys the FastAPI container with **16 GB RAM** and **2 vCPUs** completely free.
 4. Copy the public endpoint URL (e.g., `https://<username>-geovision.hf.space`).
 
-### 2. Frontend: Vercel (Static React SPA — Free CDN)
+### 2. Backend Alternative: Render (Free Web Service)
+1. Create a **New Web Service** on [Render](https://render.com).
+2. Connect your repository and select **Docker** runtime.
+3. Health check path: `/health`.
+4. Deploy to receive an instant public HTTPS endpoint (`https://geovision-api-9gci.onrender.com`).
+
+### 3. Frontend: Vercel (Static React SPA — Free CDN)
 1. Import your GitHub repository to [Vercel](https://vercel.com).
 2. Set Root Directory to `frontend`.
 3. Add Environment Variable:
-   - `VITE_API_BASE_URL`: `https://<username>-geovision.hf.space`
-4. Deploy. Vercel provides a custom global CDN domain with automatic SSL (e.g., `https://geovision.vercel.app`).
+   - `VITE_API_BASE_URL`: `https://geovision-api-9gci.onrender.com`
+4. Deploy. Vercel provides a custom global CDN domain with automatic SSL ([https://geo-vision-delta.vercel.app](https://geo-vision-delta.vercel.app)).
 
