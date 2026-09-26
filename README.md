@@ -275,7 +275,18 @@ GeoVision/
 - [ ] Synthetic Aperture Radar (SAR) coherence change detection.
 - [ ] Integration of segment-anything (SAM-Geo) foundation models.
 - [ ] Distributed spatial indexing for petabyte-scale raster catalogs.
-- [ ] ONNX Runtime and TensorRT engine exports for edge deployment.
+---
+
+## 🖥️ Mission Control UI Modules
+
+| Module | URL Path | Key Interactive Features |
+| :--- | :--- | :--- |
+| **Mission Dashboard** | `/` | Real-time system telemetry HUD, node status, and quick-launch ribbons |
+| **Vision Studio** | `/analysis` | YOLOv8 object detection, UNet land-cover mask overlays, and automated area calculations |
+| **Change Studio** | `/change` | Interactive wipe-curtain & side-by-side multi-epoch structural difference inspector |
+| **Semantic Search** | `/search` | Natural language text-to-satellite scene retrieval powered by OpenCLIP & Qdrant |
+| **Earth AI Assistant** | `/assistant` | Grounded spatial reasoning conversational stream with strict CV evidence verification |
+| **Benchmarks & Telemetry**| `/experiments`, `/status` | Subsystem latency benchmarks, precision curves, and live REST endpoint test suite |
 
 ---
 
