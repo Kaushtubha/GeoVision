@@ -224,6 +224,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               </div>
             </div>
           )}
+
+          {/* Empty State */}
+          {filteredNav.length === 0 && filteredThemes.length === 0 && (
+            <div className="py-12 text-center text-slate-400 space-y-2">
+              <Search className="w-8 h-8 text-slate-500 mx-auto" />
+              <p className="text-sm font-medium text-slate-300">No matching commands or themes found</p>
+              <p className="text-xs text-slate-500 font-mono">Try searching for "vision", "change", "search", or "theme"</p>
+            </div>
+          )}
         </div>
 
         {/* Footer shortcuts */}
@@ -231,6 +240,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <div className="flex items-center space-x-3">
             <span>Navigation: <kbd className="px-1 py-0.5 rounded bg-white/10 text-slate-300">↑</kbd> <kbd className="px-1 py-0.5 rounded bg-white/10 text-slate-300">↓</kbd></span>
             <span>Select: <kbd className="px-1 py-0.5 rounded bg-white/10 text-slate-300">↵</kbd></span>
+            <span>Close: <kbd className="px-1 py-0.5 rounded bg-white/10 text-slate-300">ESC</kbd></span>
           </div>
           <div className="flex items-center space-x-1 text-slate-400">
             <Sparkles className="w-3 h-3 text-theme-accent" />
