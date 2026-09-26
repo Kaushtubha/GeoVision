@@ -1,12 +1,15 @@
+# Global Configuration & Determinism
 seed: 42
 smoke: false
 
+# MLflow Experiment Tracking Configuration
 tracking:
   enabled: true
   experiment_name: "GeoVision"
   tracking_uri: "mlruns"
   log_models: true
 
+# Optical Object Detection Pipeline (YOLOv8)
 detection:
   model_name: "yolov8n.pt"
   dataset_name: "nwpu_vhr10"
