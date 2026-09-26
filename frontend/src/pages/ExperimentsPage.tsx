@@ -26,7 +26,7 @@ const BENCHMARK_DATA = {
     history: [192.1, 198.4, 195.2, 201.0, 196.8, 197.2],
   },
   landcover_segmentation: {
-    title: 'DeepLabV3+ 5-Class Segmentation',
+    title: 'PyTorch UNet 5-Class Segmentation',
     avg_latency_ms: 351.81,
     min_latency_ms: 338.8,
     max_latency_ms: 364.83,
