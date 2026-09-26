@@ -150,20 +150,31 @@ export const SemanticSearchPage: React.FC = () => {
                 onChange={(e) => setQueryText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Describe a satellite scene (e.g., 'deepwater container harbor with berthed vessels')..."
-                className="w-full glass-input rounded-xl px-4 py-3.5 text-sm placeholder-slate-400 focus:ring-2 focus:ring-theme-accent/50 pr-28"
+                className="w-full glass-input rounded-xl px-4 py-3.5 text-sm placeholder-slate-400 focus:ring-2 focus:ring-theme-accent/50 pr-40"
               />
-              <button
-                onClick={handleSearch}
-                disabled={loading || !queryText.trim()}
-                className={`absolute right-2 top-2 bottom-2 px-4 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all ${
-                  loading || !queryText.trim()
-                    ? 'bg-white/10 text-slate-500 cursor-not-allowed'
-                    : 'bg-theme-accent text-slate-950 hover:opacity-90 shadow-glow-sm'
-                }`}
-              >
-                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                <span>Search</span>
-              </button>
+              <div className="absolute right-2 top-2 bottom-2 flex items-center space-x-1.5">
+                {queryText && (
+                  <button
+                    onClick={() => setQueryText('')}
+                    className="px-2.5 py-1 text-xs text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors font-mono"
+                    title="Clear input"
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  onClick={handleSearch}
+                  disabled={loading || !queryText.trim()}
+                  className={`px-4 h-full rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all ${
+                    loading || !queryText.trim()
+                      ? 'bg-white/10 text-slate-500 cursor-not-allowed'
+                      : 'bg-theme-accent text-slate-950 hover:opacity-90 shadow-glow-sm'
+                  }`}
+                >
+                  {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  <span>Search</span>
+                </button>
+              </div>
             </div>
 
             {/* Suggested Prompt Chips */}
