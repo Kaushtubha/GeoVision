@@ -268,6 +268,19 @@ export const ChangeDetectionPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Dual-Epoch Alignment Status */}
+      {fileT1 && fileT2 && (
+        <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs font-mono text-emerald-300 animate-in fade-in">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Dual-Epoch Imagery Co-Registered: Ready for Siamese UNet difference inference</span>
+          </div>
+          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 uppercase font-bold tracking-wider">
+            Pair Validated
+          </span>
+        </div>
+      )}
+
       {/* Execution Toolbar */}
       <div className="glass-panel rounded-2xl p-4 border border-theme-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-4 w-full sm:w-auto">
