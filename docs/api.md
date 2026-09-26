@@ -183,3 +183,27 @@ Conversational satellite Earth assistant with structured citation verification.
   "citation_precision": 1.0
 }
 ```
+
+---
+
+## 3. Quick cURL Examples
+
+### Health Check
+```bash
+curl -X GET "https://geovision-api-9gci.onrender.com/health" -H "Accept: application/json"
+```
+
+### Semantic Scene Search
+```bash
+curl -X POST "https://geovision-api-9gci.onrender.com/api/v1/search" \
+  -H "Content-Type: application/json" \
+  -d '{"query_text": "Commercial seaport with cargo ships", "top_k": 5}'
+```
+
+### Earth AI Chat Query
+```bash
+curl -X POST "https://geovision-api-9gci.onrender.com/api/v1/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Summarize observed land-cover distribution and structural changes"}'
+```
+
