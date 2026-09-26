@@ -30,6 +30,7 @@ def main() -> None:
     args = parser.parse_args()
 
     logger.info(f"Starting GeoVision API Server on http://{args.host}:{args.port}")
+    logger.info(f"Health Probe available at http://{args.host}:{args.port}/health")
     logger.info(f"Interactive Swagger Docs available at http://{args.host}:{args.port}/docs")
     logger.info(f"ReDoc Documentation available at http://{args.host}:{args.port}/redoc")
 
