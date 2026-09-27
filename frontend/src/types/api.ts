@@ -17,6 +17,16 @@ export interface BBoxItem {
   confidence: number;
   class_id: number;
   class_name: string;
+  geographic_bbox?: [number, number, number, number] | null;
+}
+
+export interface GeoJSONPolygon {
+  type: 'Feature';
+  geometry: {
+    type: 'Polygon';
+    coordinates: number[][][];
+  };
+  properties: Record<string, any>;
 }
 
 export interface DetectionResponse {
