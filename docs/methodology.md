@@ -83,3 +83,16 @@ To prevent hallucination in conversational Earth observation queries, GeoVision 
    `CitationVerifier` extracts all cited evidence tokens and verifies their existence against the known structured context.
    $$\text{Citation Precision} = \frac{|\text{Citations} \cap \text{Known Evidence}|}{|\text{Citations}|}$$
    If any citation is fabricated or invalid, the answer is flagged with a strict hallucination warning.
+
+---
+
+## 6. Summary of Mathematical Formulations
+
+| Subsystem | Objective Loss Function | Primary Target Evaluation Metric |
+| :--- | :--- | :--- |
+| **Object Detection** | $\mathcal{L}_{\text{YOLO}} = \lambda_{\text{box}} \mathcal{L}_{\text{CIoU}} + \lambda_{\text{cls}} \mathcal{L}_{\text{BCE}} + \lambda_{\text{dfl}} \mathcal{L}_{\text{DFL}}$ | $\text{mAP@50}, \text{mAP@50-95}$ |
+| **Land-Cover Segmentation** | $\mathcal{L}_{\text{DiceCE}} = \alpha \mathcal{L}_{\text{CE}} + \beta \mathcal{L}_{\text{Dice}}$ | $\text{mIoU}, \text{Overall Accuracy (OA)}$ |
+| **Change Detection** | $\mathcal{L}_{\text{Change}} = \lambda_{\text{BCE}} \mathcal{L}_{\text{BCE}} + \lambda_{\text{Dice}} \mathcal{L}_{\text{BinaryDice}}$ | $\text{Change-IoU}, \text{F1-Score}$ |
+| **Vector Retrieval** | $\mathcal{L}_{\text{InfoNCE}} = -\log \frac{\exp(\text{sim}(v_i, t_i)/\tau)}{\sum_j \exp(\text{sim}(v_i, t_j)/\tau)}$ | $\text{Recall@1}, \text{Recall@5}, \text{MRR}$ |
+| **Grounded VLM** | $\text{Deterministic Citation Verification Logic}$ | $\text{Citation Precision}, \text{Citation Recall}$ |
+
