@@ -101,4 +101,38 @@ export interface EvidenceExtractionResponse {
   latency_ms: number;
 }
 
+export interface GeoTransformData {
+  crs: string;
+  bounds: [number, number, number, number];
+  affine_matrix: number[];
+  resolution_m?: number | null;
+}
+
+export interface GeoTIFFMetadata {
+  filename: string;
+  width: number;
+  height: number;
+  bands: number;
+  crs: string;
+  transform: GeoTransformData;
+}
+
+export interface EarthObservationMetadata {
+  sensor_name?: string;
+  acquisition_date?: string;
+  cloud_cover_percentage?: number;
+  sun_azimuth_deg?: number;
+  sun_elevation_deg?: number;
+  spatial_resolution_m: number;
+}
+
+export interface PipelineMetrics {
+  inference_latency_ms: number;
+  preprocess_latency_ms?: number;
+  postprocess_latency_ms?: number;
+  memory_allocated_mb?: number;
+  device: string;
+}
+
 export type ApiStatus = 'idle' | 'loading' | 'success' | 'error';
+
