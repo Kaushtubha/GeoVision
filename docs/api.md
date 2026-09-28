@@ -207,3 +207,31 @@ curl -X POST "https://geovision-api-9gci.onrender.com/api/v1/chat" \
   -d '{"query": "Summarize observed land-cover distribution and structural changes"}'
 ```
 
+---
+
+## 4. HTTP Status Codes & Error Contracts
+
+GeoVision standardizes all API error responses in accordance with RFC 7807 problem details:
+
+| Status Code | Description | Typical Cause |
+| :--- | :--- | :--- |
+| `200 OK` | Successful execution | Request processed successfully with ML predictions returned. |
+| `400 Bad Request` | Client error | Unsupported image format, corrupt image bytes, or missing fields. |
+| `422 Unprocessable Entity` | Validation error | Pydantic schema validation failure (e.g. threshold out of range `[0.0, 1.0]`). |
+| `500 Internal Server Error` | Inference engine fault | CUDA out-of-memory or model weight unpickling failure. |
+| `503 Service Unavailable` | Subsystem not ready | Heavy pipeline initialization in progress or vector index offline. |
+
+### Standard Error Response Format
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "confidence_threshold"],
+      "msg": "Input should be less than or equal to 1.0",
+      "type": "less_than_equal"
+    }
+  ]
+}
+```
+
+
