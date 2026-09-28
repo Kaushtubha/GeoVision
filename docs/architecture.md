@@ -15,13 +15,13 @@ graph TD
     end
 
     subgraph API Gateway & Routing
-        F莊[FastAPI Application Router]
-        F莊 -->|POST /api/v1/detect| SVC_DET[Detection Service]
-        F莊 -->|POST /api/v1/segment| SVC_SEG[Segmentation Service]
-        F莊 -->|POST /api/v1/change| SVC_CHG[Change Detection Service]
-        F莊 -->|POST /api/v1/search| SVC_RET[Vector Search Service]
-        F莊 -->|POST /api/v1/chat| SVC_VLM[Grounded VLM Assistant]
-        F莊 -->|POST /api/v1/evidence| SVC_EVI[Evidence Synthesizer]
+        FASTAPI[FastAPI Application Router]
+        FASTAPI -->|POST /api/v1/detect| SVC_DET[Detection Service]
+        FASTAPI -->|POST /api/v1/segment| SVC_SEG[Segmentation Service]
+        FASTAPI -->|POST /api/v1/change| SVC_CHG[Change Detection Service]
+        FASTAPI -->|POST /api/v1/search| SVC_RET[Vector Search Service]
+        FASTAPI -->|POST /api/v1/chat| SVC_VLM[Grounded VLM Assistant]
+        FASTAPI -->|POST /api/v1/evidence| SVC_EVI[Evidence Synthesizer]
     end
 
     subgraph Service & ML Core Layer
@@ -47,9 +47,37 @@ graph TD
         FS[(Local / Mounted Geospatial Storage)]
     end
 
-    UI --> F莊
+    UI --> FASTAPI
     CLI --> SVC_DET & SVC_SEG & SVC_CHG & SVC_RET & SVC_VLM
-    EXT --> F莊
+    EXT --> FASTAPI
+```
+
+---
+
+## 2. End-to-End Inference Lifecycle Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as User / Dashboard
+    participant API as FastAPI Router
+    participant Service as Vision Subsystem Service
+    participant Tiler as RasterTiler Engine
+    participant Model as PyTorch / YOLO Model
+    participant Geo as CRS Transformer
+
+    Client->>API: Multipart Image Upload + Metadata
+    API->>Service: Parse Bytes & Decode Array
+    Service->>Tiler: Check Dimension & Slice Tiles (if >512x512)
+    loop For each Patch / Batch
+        Tiler->>Model: Forward Tensor Pass (CUDA / CPU)
+        Model-->>Tiler: Predicted Logits / Bounding Boxes
+    end
+    Tiler->>Tiler: Apply Hann Window & Reconstruct Mosaic
+    Service->>Geo: Project Pixel BBoxes/Polygons to EPSG:4326
+    Geo-->>Service: Georeferenced Coordinates & Hectare Metrics
+    Service-->>API: Structured Schema Payload
+    API-->>Client: JSON Response with Latency & Metrics
 ```
 
 ---
