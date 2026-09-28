@@ -141,3 +141,24 @@ class GeoTIFFMetadataResponse(BaseModel):
     crs: str
     transform: GeoTransformSchema
 
+
+class StructuredEvidenceItem(BaseModel):
+    """Granular evidence item linked to a vision subsystem finding."""
+
+    tag: str = Field(..., description="Evidence citation token, e.g. '[DET-0]' or '[SEG-1]'")
+    category: str = Field(..., description="Vision modality: 'detection', 'segmentation', 'change', 'retrieval'")
+    description: str = Field(..., description="Human-readable factual finding")
+    confidence: float = Field(default=1.0, description="Verification confidence score")
+    payload: dict[str, Any] = Field(default_factory=dict, description="Raw feature or bbox data")
+
+
+class CitationVerificationDetails(BaseModel):
+    """Detailed verification metrics for grounded VLM responses."""
+
+    total_claims: int = Field(default=0)
+    verified_citations: list[str] = Field(default_factory=list)
+    missing_citations: list[str] = Field(default_factory=list)
+    hallucination_rate: float = Field(default=0.0)
+    precision: float = Field(default=1.0)
+
+
