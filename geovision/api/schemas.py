@@ -120,3 +120,24 @@ class EvidenceExtractionResponse(BaseModel):
     summary_text: str
     raw_evidence: dict[str, Any] = Field(default_factory=dict)
     latency_ms: float
+
+
+class GeoTransformSchema(BaseModel):
+    """Georeferencing affine transformation schema."""
+
+    crs: str = Field(default="EPSG:4326", description="Coordinate reference system")
+    bounds: list[float] = Field(..., description="[west, south, east, north] bounding box")
+    affine_matrix: list[float] = Field(default_factory=list, description="Affine 6-parameter transformation array")
+    resolution_m: float | None = Field(default=None, description="Ground sampling distance in meters")
+
+
+class GeoTIFFMetadataResponse(BaseModel):
+    """Spatial raster metadata response."""
+
+    filename: str
+    width: int
+    height: int
+    bands: int
+    crs: str
+    transform: GeoTransformSchema
+
