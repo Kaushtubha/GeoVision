@@ -72,3 +72,29 @@ npm install
 npm run dev
 ```
 Interactive UI will be accessible at `http://localhost:3000` (or `http://localhost:5173`).
+
+---
+
+## 6. Troubleshooting & FAQ
+
+### Issue: `rasterio` or `GDAL` fails to install on Windows
+**Solution**: Install pre-compiled binary wheels or install via conda/mamba:
+```bash
+pip install rasterio --prefer-binary
+# Or with conda:
+conda install -c conda-forge rasterio geopandas
+```
+
+### Issue: PyTorch CUDA out of memory (OOM) during large orthophoto inference
+**Solution**: Enable automatic tiled patch reconstruction by specifying a smaller patch size:
+```python
+from geovision.geo.tiling import RasterTiler
+tiler = RasterTiler(patch_size=512, stride=256)
+```
+
+### Issue: OpenCLIP weights download hangs
+**Solution**: Set the HuggingFace / PyTorch cache directory environment variable:
+```bash
+export TORCH_HOME="./weights/cache"
+```
+
