@@ -29,3 +29,15 @@ This document presents the empirical benchmark measurements obtained directly fr
   ```bash
   python scripts/benchmark_suite.py --iterations 5 --output benchmark_report.json
   ```
+
+---
+
+## 3. Hardware Requirements & Memory Profiles
+
+| Deployment Profile | Compute Device | Min RAM / VRAM | Recommended Device | Target Latency |
+| :--- | :--- | :--- | :--- | :--- |
+| **Edge / CPU Demo** | 4-Core CPU | 4 GB RAM | Intel i5 / AMD Ryzen 5 | < 500 ms / patch |
+| **Standard Cloud VM** | 8-Core vCPU | 8 GB RAM | AWS c6i.2xlarge | < 250 ms / patch |
+| **GPU Inference Node** | NVIDIA T4 / RTX 3060 | 6 GB VRAM | AWS g4dn.xlarge | < 45 ms / patch |
+| **High-Throughput Node**| NVIDIA A10G / A100 | 16 GB+ VRAM | AWS g5.2xlarge | < 15 ms / patch |
+
